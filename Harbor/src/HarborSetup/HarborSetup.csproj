@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Built on .NET Framework 4.8 because every Windows that can run Harbor already has it, so this exe needs nothing
+    installed first and stays small apart from the app it carries. build\make-installer.ps1 builds it twice: once empty
+    to become "Uninstall Harbor.exe" inside the app, then again with the zipped app embedded to become the installer.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Harbor-Setup</AssemblyName>
+    <RootNamespace>HarborSetup</RootNamespace>
+    <AssemblyTitle>Harbor Setup</AssemblyTitle>
+    <ApplicationIcon>..\Harbor\Assets\Harbor.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DebugType>none</DebugType>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <StartupObject>HarborSetup.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Resource Include="..\Harbor\Assets\Harbor.ico" Link="Harbor.ico" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PayloadZip)' != ''">
+    <EmbeddedResource Include="$(PayloadZip)" LogicalName="Harbor.zip" />
+  </ItemGroup>
+
+</Project>

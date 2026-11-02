@@ -1,0 +1,11 @@
+<Project>
+  <!-- Shared by the app and its installer, so the version and credit only live in one place. -->
+  <PropertyGroup>
+    <Version>1.1.0</Version>
+    <Product>Harbor</Product>
+    <Authors>Yusuf Yunus</Authors>
+    <Company>Yusuf Yunus</Company>
+    <Copyright>Copyright © 2026 Yusuf Yunus</Copyright>
+    <Description>A floating dock and live wallpaper for Windows, made by Yusuf Yunus.</Description>
+  </PropertyGroup>
+</Project>

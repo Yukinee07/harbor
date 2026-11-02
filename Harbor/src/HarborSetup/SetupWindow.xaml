@@ -1,0 +1,195 @@
+<Window x:Class="HarborSetup.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Harbor Setup" Width="560" Height="440" WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        WindowStyle="None" Background="#1B1B1F" Foreground="#F3F3F5" FontSize="14"
+        FontFamily="Segoe UI Variable Text, Segoe UI" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="44" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Dim" Color="#A6A6B0"/>
+        <LinearGradientBrush x:Key="Accent" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Offset="0" Color="#7076F0"/>
+            <GradientStop Offset="1" Color="#4E4DC9"/>
+        </LinearGradientBrush>
+
+        <Style x:Key="BaseButton" TargetType="Button">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="MinWidth" Value="104"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#F3F3F5"/>
+            <Setter Property="Background" Value="#2D2D33"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Face" CornerRadius="10" Background="{TemplateBinding Background}"/>
+                            <Border x:Name="Tint" CornerRadius="10" Background="White" Opacity="0"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tint" Property="Opacity" Value="0.08"/></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Tint" Property="Opacity" Value="0.02"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Tint" Property="Opacity" Value="0.12"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="Option" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#F3F3F5"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Border x:Name="Box" Width="20" Height="20" CornerRadius="6" BorderThickness="1" BorderBrush="#5A5A63" Background="#25252A">
+                                <Path x:Name="Tick" Data="M3.5,8.5 L7,12 L13,4.5" Stroke="White" StrokeThickness="2" Width="16" Height="16" Visibility="Collapsed"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                            </Border>
+                            <ContentPresenter Margin="11,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource Accent}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#6C72EC"/>
+                                <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="#F3F3F5"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <Border x:Name="PART_Track" CornerRadius="4" Background="#34343B"/>
+                            <Border x:Name="PART_Indicator" CornerRadius="4" Background="{StaticResource Accent}" HorizontalAlignment="Left"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="30,30,30,24">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Offset="0" Color="#2C2C5C"/>
+                    <GradientStop Offset="1" Color="#1B1B1F"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <StackPanel Orientation="Horizontal">
+                <Image x:Name="HeaderIcon" Width="68" Height="68" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Harbor" FontSize="30" FontWeight="SemiBold" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+                    <TextBlock x:Name="Tagline" Text="A floating dock and live wallpaper for Windows" Foreground="{StaticResource Dim}" Margin="0,1,0,0"/>
+                    <TextBlock Text="Made by Yusuf Yunus" ToolTip="MUHAHAHAHHHA" Foreground="#B9BCFF" FontWeight="SemiBold" FontSize="13" Margin="0,5,0,0"
+                               WindowChrome.IsHitTestVisibleInChrome="True" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Button x:Name="CloseButton" Grid.Row="0" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,8,0" Width="32" Height="32"
+                WindowChrome.IsHitTestVisibleInChrome="True" Background="Transparent" Foreground="#A6A6B0" Cursor="Hand" FocusVisualStyle="{x:Null}" IsTabStop="False">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Face" CornerRadius="8" Background="Transparent">
+                        <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.3" Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#33FFFFFF"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+        <!-- Welcome -->
+        <Grid x:Name="PageWelcome" Grid.Row="1" Margin="30,4,30,26">
+            <StackPanel>
+                <CheckBox x:Name="Autostart" Style="{StaticResource Option}" IsChecked="True" Content="Start Harbor when I sign in"/>
+                <CheckBox x:Name="Desktop" Style="{StaticResource Option}" Content="Add a desktop shortcut"/>
+                <TextBlock Foreground="{StaticResource Dim}" FontSize="13" TextWrapping="Wrap" LineHeight="19" Margin="0,6,0,0">
+                    Installs just for you, with no admin rights. Your desktop and taskbar go back to normal whenever you quit Harbor.
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource BaseButton}" Content="Cancel" Click="Close_Click"/>
+                <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Content="Install" Click="Install_Click" IsDefault="True"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Working -->
+        <StackPanel x:Name="PageWork" Grid.Row="1" Margin="30,30,30,26" Visibility="Collapsed">
+            <TextBlock x:Name="WorkTitle" Text="Installing Harbor" FontSize="18" FontWeight="SemiBold"/>
+            <ProgressBar x:Name="Bar" Margin="0,18,0,0" Value="0"/>
+            <TextBlock x:Name="WorkNote" Text="This only takes a moment." Foreground="{StaticResource Dim}" FontSize="13" Margin="0,14,0,0"/>
+        </StackPanel>
+
+        <!-- Done -->
+        <Grid x:Name="PageDone" Grid.Row="1" Margin="30,4,30,26" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Harbor is ready" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock Foreground="{StaticResource Dim}" TextWrapping="Wrap" LineHeight="21" Margin="0,10,0,0">
+                    The dock sits at the bottom of every screen. Hover the Harbor icon for volume, brightness, battery and wallpaper controls, or the clock for a calendar. To quit, right-click the Harbor icon in the system tray.
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource BaseButton}" Content="Close" Click="Close_Click"/>
+                <Button x:Name="OpenButton" Style="{StaticResource PrimaryButton}" Content="Open Harbor" Click="Open_Click" IsDefault="True"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Uninstall -->
+        <Grid x:Name="PageUninstall" Grid.Row="1" Margin="30,4,30,26" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Remove Harbor?" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock Foreground="{StaticResource Dim}" TextWrapping="Wrap" LineHeight="21" Margin="0,8,0,16">
+                    This removes the app and its shortcuts. Your desktop and taskbar go back to how they were.
+                </TextBlock>
+                <CheckBox x:Name="RemoveSettings" Style="{StaticResource Option}" Content="Also delete my settings and pinned apps"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource BaseButton}" Content="Keep it" Click="Close_Click"/>
+                <Button x:Name="RemoveButton" Style="{StaticResource PrimaryButton}" Content="Remove" Click="Remove_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Result: removed, or something went wrong -->
+        <Grid x:Name="PageResult" Grid.Row="1" Margin="30,4,30,26" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock x:Name="ResultTitle" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock x:Name="ResultText" Foreground="{StaticResource Dim}" TextWrapping="Wrap" LineHeight="21" Margin="0,10,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource PrimaryButton}" Content="Close" Click="Close_Click" IsDefault="True"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
