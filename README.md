@@ -43,7 +43,7 @@ Harbor installs for the current user only and can be removed from Windows Settin
 Hover the Harbor icon for volume, a brightness slider for each screen, battery level and wallpaper motion. External monitors are controlled over DDC/CI, so one that doesn't support it won't get a slider.
 
 <p align="center">
-  <img src="Harbordocs/images/panel.png" width="480" alt="The quick panel open above the Harbor icon">
+  <img src="harbor/Harbordocs/images/panel.png" width="480" alt="The quick panel open above the Harbor icon">
 </p>
 
 ### The live wallpaper
