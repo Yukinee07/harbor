@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><b>Download the latest version</b></a>
+  <a href="../../../releases/latest"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](docs/images/dock.png)
 
 ## Install
 
-1. Open the [Releases page](../../releases/latest) and download `Harbor-Setup-<version>.exe`.
+1. Open the [Releases page](../../../releases/latest) and download `Harbor-Setup-<version>.exe`.
 2. Run it. That one file is everything: it needs no admin rights and carries its own copy of .NET.
 
 The installer isn't code signed, so Windows may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
@@ -43,14 +43,14 @@ Harbor installs for the current user only and can be removed from Windows Settin
 Hover the Harbor icon for volume, a brightness slider for each screen, battery level and wallpaper motion. External monitors are controlled over DDC/CI, so one that doesn't support it won't get a slider.
 
 <p align="center">
-  <img src="docs/images/panel.png" width="480" alt="The quick panel open above the Harbor icon">
+  <img src="Harbordocs/images/panel.png" width="480" alt="The quick panel open above the Harbor icon">
 </p>
 
 ### The live wallpaper
 
 Ten scenes that react to your mouse, drawn at your screen's own resolution behind the desktop icons. You can also use your own video.
 
-![The ten wallpaper scenes](docs/images/wallpapers.jpg)
+![The ten wallpaper scenes](Harbor/docs/images/wallpapers.jpg)
 
 - **Interactive**: light and movement follow your pointer, and clicks on the desktop send ripples.
 - **React to music** (optional): the bass, mids and treble of whatever your PC is playing drive the scene. Nothing is recorded or stored.
