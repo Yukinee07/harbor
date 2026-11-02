@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Harbor/Assets/Harbor.png" width="96" alt="Harbor icon">
+  <img src="Harbor/src/Harbor/Assets/Harbor.png" width="96" alt="Harbor icon">
 </p>
 
 <h1 align="center">Harbor</h1>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="../../../releases/latest"><b>Download the latest version</b></a>
+  <a href="Release/Harbor-Setup-1.1.0.exe"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](Harbor/docs/images/dock.png)
