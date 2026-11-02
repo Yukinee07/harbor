@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Harbor/Harbor/Assets/Harbor.png" width="96" alt="Harbor icon">
+  <img src="/Harbor/Assets/Harbor.png" width="96" alt="Harbor icon">
 </p>
 
 <h1 align="center">Harbor</h1>
@@ -17,7 +17,7 @@
 
 ## Install
 
-1. Open the [Releases page](../../releases/latest) and download `Harbor-Setup-<version>.exe`.
+1. Open the [Releases page](Release/Harbor-Setup-1.1.0.exe) and download `Harbor-Setup-<version>.exe`.
 2. Run it. That one file is everything: it needs no admin rights and carries its own copy of .NET.
 
 The installer isn't code signed, so Windows may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
