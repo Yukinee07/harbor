@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Yukinee07/harbor/blob/main/Release/Harbor-Setup-1.1.0.exe"><b>Download the latest version</b></a>
+  <a href="../../releases/latest"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](docs/images/dock.png)
@@ -48,12 +48,15 @@ Hover the Harbor icon for volume, a brightness slider for each screen, battery l
 
 ### The live wallpaper
 
-Ten scenes that react to your mouse, drawn at your screen's own resolution behind the desktop icons. You can also use your own video.
+Eleven scenes that react to your mouse, drawn at your screen's own resolution behind the desktop icons. You can also use your own video.
 
-![The ten wallpaper scenes](docs/images/wallpapers.jpg)
+![Sakura: cherry trees in full bloom beside a still lake](docs/images/sakura.jpg)
+
+![Ten more wallpaper scenes](docs/images/wallpapers.jpg)
 
 - **Interactive**: light and movement follow your pointer, and clicks on the desktop send ripples.
 - **React to music** (optional): the bass, mids and treble of whatever your PC is playing drive the scene. Nothing is recorded or stored.
+- **Sakura**: cherry trees in full bloom beside a still lake, with petals falling on the breeze. Move the mouse to blow them around.
 - **Careful with power**: the wallpaper stops when it's hidden behind windows, under a full-screen game, or when the PC is locked. It slows down on battery and goes still when the battery is low. It also asks Windows for the power-saving graphics chip, so it shouldn't wake a gaming GPU on its own.
 
 ## Privacy
@@ -63,6 +66,7 @@ Harbor has no accounts and no telemetry, and it doesn't connect to the internet.
 ## Known limitations
 
 - Developed and tested on one Windows 11 PC so far, so please report anything odd on yours.
+- If Harbor crashes, it restores the Windows taskbar and starts itself again. A small second Harbor process waits in the background to do that.
 - The installer isn't code signed, and there's no automatic update check.
 - The dock doesn't reserve screen space, so it covers the bottom of maximized windows unless auto-hide is on.
 - Over a very bright page, the dock's soft shadow shows as a faint smudge at its centre rather than along its length.

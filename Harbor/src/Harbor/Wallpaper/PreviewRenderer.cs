@@ -49,6 +49,8 @@ internal static class PreviewRenderer
                 ResourceUsage.Staging, CpuAccessFlags.Read, 1, 0, ResourceOptionFlags.None);
             using var staging = device.CreateTexture2D(stagingDesc);
 
+            using var baked = SceneCatalog.Get(sceneId).UsesBake ? SakuraPainter.Bake(device, width) : null;
+
             // A posed cursor so the preview shows the interactive effect.
             var c = new FrameConstants
             {
@@ -71,6 +73,7 @@ internal static class PreviewRenderer
             using var wrap = device.CreateSamplerState(new SamplerDescription(Filter.MinMagMipLinear, TextureAddressMode.Wrap, 0, 1, ComparisonFunction.Never, 0, float.MaxValue));
             ctx.PSSetShaderResource(1, noiseView);
             ctx.PSSetSampler(1, wrap);
+            if (baked != null) ctx.PSSetShaderResources(3, baked.Views);
             var info = SceneCatalog.Get(sceneId);
             ID3D11Texture2D[]? sim = null;
             ID3D11RenderTargetView[]? simRtv = null;

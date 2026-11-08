@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using Harbor.Dock;
 using Harbor.Interop;
@@ -43,7 +42,9 @@ public partial class SettingsWindow : Window
         {
             ThemeManager.StyleWindow(this, mica: true);
             if (!ThemeManager.MicaSupported) SetResourceReference(BackgroundProperty, "H.Window");
+            CenterOnPointerScreen();
         };
+        Loaded += (_, _) => CenterOnPointerScreen();
         StateChanged += (_, _) =>
         {
             Root.Margin = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
@@ -57,8 +58,7 @@ public partial class SettingsWindow : Window
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); _settings.Save(); };
 
         var version = typeof(App).Assembly.GetName().Version;
-        AboutVersion.Text = $"Version {version?.ToString(3)}. A floating dock and live wallpaper for Windows.";
-        SettingsPath.Text = AppSettings.Directory;
+        AboutVersion.Text = $"Version {version?.ToString(3)}";
         // An .ico holds several sizes and WPF takes the first, which is too small for a high DPI screen.
         var icons = BitmapDecoder.Create(new Uri("pack://application:,,,/Assets/Harbor.ico"), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         AboutIcon.Source = icons.Frames.OrderByDescending(f => f.PixelWidth).First();
@@ -92,6 +92,19 @@ public partial class SettingsWindow : Window
         UpdateStatus();
     }
 
+    /// <summary>
+    /// In real pixels, because WPF's own centring goes wrong across screens scaled differently and could put the top of the
+    /// window off the screen. Done twice: landing on a differently scaled screen resizes the window.
+    /// </summary>
+    void CenterOnPointerScreen()
+    {
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero || !Native.GetCursorPos(out var pt) || !Native.GetWindowRect(hwnd, out var r)) return;
+        var work = Native.GetMonitorInfo(Native.MonitorFromPoint(pt, Native.MONITOR_DEFAULTTONEAREST)).rcWork;
+        int x = work.Left + Math.Max(0, (work.Width - r.Width) / 2), y = work.Top + Math.Max(0, (work.Height - r.Height) / 2);
+        Native.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+    }
+
     void OnDockSettingsChanged()
     {
         LoadValues();
@@ -105,19 +118,17 @@ public partial class SettingsWindow : Window
         {
             "dock" => NavDock,
             "apps" => NavApps,
-            "wallpaper" => NavWallpaper,
-            "power" => NavPower,
-            "about" => NavAbout,
-            _ => NavHome,
+            "general" or "power" or "about" => NavGeneral,
+            _ => NavWallpaper,
         }).IsChecked = true;
     }
 
     void Nav_Checked(object sender, RoutedEventArgs e)
     {
-        if (PageHome == null) return;
+        if (PageWallpaper == null) return;
         var pages = new (RadioButton nav, FrameworkElement page)[]
         {
-            (NavHome, PageHome), (NavDock, PageDock), (NavApps, PageApps), (NavWallpaper, PageWallpaper), (NavPower, PagePower), (NavAbout, PageAbout),
+            (NavWallpaper, PageWallpaper), (NavDock, PageDock), (NavApps, PageApps), (NavGeneral, PageGeneral),
         };
         foreach (var (nav, page) in pages)
         {
@@ -138,10 +149,10 @@ public partial class SettingsWindow : Window
 
     void UpdateLivePreview()
     {
-        if (PageHome == null) return;
+        if (PageWallpaper == null) return;
         // The preview follows the same power rules as the wallpaper: on battery outside Full, show a still.
         bool powerOk = !_wallpaper.OnBattery || _wallpaper.Tier == WallpaperTier.Full;
-        bool want = IsVisible && WindowState != WindowState.Minimized && PageHome.Visibility == Visibility.Visible && powerOk;
+        bool want = IsVisible && WindowState != WindowState.Minimized && PageWallpaper.Visibility == Visibility.Visible && powerOk;
         var scene = SceneCatalog.Get(_settings.Wallpaper.Scene);
         if (want && !scene.UsesVideo)
         {
@@ -161,9 +172,7 @@ public partial class SettingsWindow : Window
     {
         var scene = SceneCatalog.Get(_settings.Wallpaper.Scene);
         HeroSceneName.Text = scene.Name;
-        HeroSceneDesc.Text = scene.UsesVideo && !string.IsNullOrEmpty(_settings.Wallpaper.VideoPath)
-            ? Path.GetFileName(_settings.Wallpaper.VideoPath)
-            : scene.Description;
+        VideoRow.Visibility = scene.UsesVideo ? Visibility.Visible : Visibility.Collapsed;
         if (_stills.TryGetValue(scene.Id, out var still)) DockStageImage.Source = still;
         UpdateLivePreview();
     }
@@ -214,83 +223,39 @@ public partial class SettingsWindow : Window
         _loading = true;
         var d = _settings.Dock;
         IconSize.Value = d.IconSize;
-        Magnify.IsChecked = d.Magnification;
-        MagnifyAmount.Value = d.MagnificationAmount;
+        MagnifyAmount.Value = d.Magnification ? d.MagnificationAmount : 0;
         ThemeSystem.IsChecked = d.Theme == HThemeMode.System;
         ThemeDark.IsChecked = d.Theme == HThemeMode.Dark;
         ThemeLight.IsChecked = d.Theme == HThemeMode.Light;
-        Tint.Value = d.TintOpacity;
-        Roundness.Value = d.CornerRoundness;
         HideNever.IsChecked = d.AutoHide == AutoHideMode.Never;
         HideOverlap.IsChecked = d.AutoHide == AutoHideMode.WhenOverlapped;
         HideAlways.IsChecked = d.AutoHide == AutoHideMode.Always;
-        HideTaskbar.IsChecked = QuickTaskbar.IsChecked = d.HideWindowsTaskbar;
-        HideFullscreen.IsChecked = d.HideOnFullscreen;
-        Previews.IsChecked = QuickPreviews.IsChecked = d.WindowPreviews;
-        Bounce.IsChecked = d.BounceOnLaunch;
-        Labels.IsChecked = d.ShowLabels;
+        HideTaskbar.IsChecked = d.HideWindowsTaskbar;
+        Previews.IsChecked = d.WindowPreviews;
         ShowHarbor.IsChecked = d.ShowHarborButton;
         ShowClockToggle.IsChecked = d.ShowClock;
         ShowAllScreens.IsChecked = d.ShowOnAllScreens;
         ShowStart.IsChecked = d.ShowStartButton;
         ShowMedia.IsChecked = d.ShowNowPlaying;
         ShowBin.IsChecked = d.ShowRecycleBin;
-        Indicators.IsChecked = d.ShowRunningIndicators;
 
         var w = _settings.Wallpaper;
         WpEnabled.IsChecked = w.Enabled;
-        HomeSmart.IsChecked = ModeSmart.IsChecked = w.Mode == WallpaperMode.Smart;
-        HomeAnimated.IsChecked = ModeAnimated.IsChecked = w.Mode == WallpaperMode.Animated;
-        HomeStatic.IsChecked = ModeStatic.IsChecked = w.Mode == WallpaperMode.Static;
-        WpInteractive.IsChecked = QuickPointer.IsChecked = w.Interactive;
-        WpMusic.IsChecked = QuickMusic.IsChecked = w.AudioReactive;
-        WpStrength.Value = w.MouseStrength;
-        WpSpeed.Value = w.Speed;
-        WpHue.Value = w.Hue;
-        WpSat.Value = w.Saturation;
-        WpBright.Value = w.Brightness;
+        HomeSmart.IsChecked = w.Mode == WallpaperMode.Smart;
+        HomeAnimated.IsChecked = w.Mode == WallpaperMode.Animated;
+        HomeStatic.IsChecked = w.Mode == WallpaperMode.Static;
+        WpInteractive.IsChecked = w.Interactive;
+        WpMusic.IsChecked = w.AudioReactive;
         BatEco.IsChecked = w.OnBattery == BatteryBehavior.Eco;
         BatStatic.IsChecked = w.OnBattery == BatteryBehavior.Static;
         BatFull.IsChecked = w.OnBattery == BatteryBehavior.Full;
-        BatLimit.Value = w.StaticBelowBatteryPercent;
-        WpSaver.IsChecked = w.StaticOnEnergySaver;
-        Idle0.IsChecked = w.IdleMinutes <= 0;
-        Idle2.IsChecked = w.IdleMinutes is > 0 and <= 2;
-        Idle5.IsChecked = w.IdleMinutes is > 2 and <= 5;
-        Idle15.IsChecked = w.IdleMinutes > 5;
-        WpCovered.IsChecked = w.PauseWhenCovered;
-        WpFullscreen.IsChecked = w.PauseWhenFullscreen;
-        WpLocked.IsChecked = w.PauseWhenLocked;
-        Fps30.IsChecked = w.FrameRateLimit <= 30;
-        Fps60.IsChecked = w.FrameRateLimit is > 30 and <= 60;
-        Fps120.IsChecked = w.FrameRateLimit > 60;
-        Amb15.IsChecked = w.AmbientFrameRate <= 15;
-        Amb24.IsChecked = w.AmbientFrameRate is > 15 and <= 24;
-        Amb30.IsChecked = w.AmbientFrameRate is > 24 and <= 30;
-        Amb60.IsChecked = w.AmbientFrameRate > 30;
-        Res100.IsChecked = w.RenderScale >= 0.99;
-        Res75.IsChecked = w.RenderScale is >= 0.6 and < 0.99;
-        Res50.IsChecked = w.RenderScale < 0.6;
-        if (!string.IsNullOrEmpty(w.VideoPath)) VideoPathText.Text = w.VideoPath;
+        QualityLight.IsChecked = w.RenderScale < 0.6;
+        QualityBalanced.IsChecked = w.RenderScale is >= 0.6 and < 0.99;
+        QualityBest.IsChecked = w.RenderScale >= 0.99;
+        if (!string.IsNullOrEmpty(w.VideoPath)) VideoPathText.Text = Path.GetFileName(w.VideoPath);
 
         Autostart.IsChecked = Startup.IsEnabled;
         _loading = false;
-        UpdateValueLabels();
-    }
-
-    void UpdateValueLabels()
-    {
-        IconSizeValue.Text = $"{IconSize.Value:0}";
-        MagnifyValue.Text = $"{1 + MagnifyAmount.Value:0.0#}x";
-        TintValue.Text = $"{Tint.Value * 100:0}%";
-        RoundValue.Text = $"{Roundness.Value * 100:0}%";
-        StrengthValue.Text = $"{WpStrength.Value * 100:0}%";
-        SpeedValue.Text = $"{WpSpeed.Value:0.0#}x";
-        HueValue.Text = $"{WpHue.Value:0}°";
-        SatValue.Text = $"{WpSat.Value * 100:0}%";
-        BrightValue.Text = $"{WpBright.Value * 100:0}%";
-        BatLimitValue.Text = BatLimit.Value < 1 ? "Off" : $"{BatLimit.Value:0}%";
-        MagnifyAmount.IsEnabled = Magnify.IsChecked == true;
     }
 
     void Dock_Changed(object sender, RoutedEventArgs e)
@@ -298,29 +263,19 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         var d = _settings.Dock;
         d.IconSize = Math.Round(IconSize.Value);
-        d.Magnification = Magnify.IsChecked == true;
-        d.MagnificationAmount = Math.Round(MagnifyAmount.Value, 2);
+        // One slider does both jobs: all the way down is off.
+        d.Magnification = MagnifyAmount.Value >= 0.05;
+        if (d.Magnification) d.MagnificationAmount = Math.Round(MagnifyAmount.Value, 2);
         d.Theme = ThemeDark.IsChecked == true ? HThemeMode.Dark : ThemeLight.IsChecked == true ? HThemeMode.Light : HThemeMode.System;
-        d.TintOpacity = Math.Round(Tint.Value, 2);
-        d.CornerRoundness = Math.Round(Roundness.Value, 2);
         d.AutoHide = HideAlways.IsChecked == true ? AutoHideMode.Always : HideOverlap.IsChecked == true ? AutoHideMode.WhenOverlapped : AutoHideMode.Never;
         d.HideWindowsTaskbar = HideTaskbar.IsChecked == true;
-        d.HideOnFullscreen = HideFullscreen.IsChecked == true;
         d.WindowPreviews = Previews.IsChecked == true;
-        d.BounceOnLaunch = Bounce.IsChecked == true;
-        d.ShowLabels = Labels.IsChecked == true;
         d.ShowHarborButton = ShowHarbor.IsChecked == true;
         d.ShowClock = ShowClockToggle.IsChecked == true;
         d.ShowOnAllScreens = ShowAllScreens.IsChecked == true;
         d.ShowStartButton = ShowStart.IsChecked == true;
         d.ShowNowPlaying = ShowMedia.IsChecked == true;
         d.ShowRecycleBin = ShowBin.IsChecked == true;
-        d.ShowRunningIndicators = Indicators.IsChecked == true;
-        _loading = true;
-        QuickTaskbar.IsChecked = d.HideWindowsTaskbar;
-        QuickPreviews.IsChecked = d.WindowPreviews;
-        _loading = false;
-        UpdateValueLabels();
         _dock.ApplySettings();
         if (sender == ThemeDark || sender == ThemeLight || sender == ThemeSystem)
         {
@@ -336,77 +291,21 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         var w = _settings.Wallpaper;
         w.Enabled = WpEnabled.IsChecked == true;
-        w.Mode = ModeStatic.IsChecked == true ? WallpaperMode.Static : ModeAnimated.IsChecked == true ? WallpaperMode.Animated : WallpaperMode.Smart;
+        w.Mode = HomeStatic.IsChecked == true ? WallpaperMode.Static : HomeAnimated.IsChecked == true ? WallpaperMode.Animated : WallpaperMode.Smart;
         w.Interactive = WpInteractive.IsChecked == true;
         w.AudioReactive = WpMusic.IsChecked == true;
-        w.MouseStrength = Math.Round(WpStrength.Value, 2);
-        w.Speed = Math.Round(WpSpeed.Value, 2);
-        w.Hue = Math.Round(WpHue.Value);
-        w.Saturation = Math.Round(WpSat.Value, 2);
-        w.Brightness = Math.Round(WpBright.Value, 2);
         w.OnBattery = BatStatic.IsChecked == true ? BatteryBehavior.Static : BatFull.IsChecked == true ? BatteryBehavior.Full : BatteryBehavior.Eco;
-        w.StaticBelowBatteryPercent = (int)Math.Round(BatLimit.Value / 5) * 5;
-        w.StaticOnEnergySaver = WpSaver.IsChecked == true;
-        w.IdleMinutes = Idle2.IsChecked == true ? 2 : Idle5.IsChecked == true ? 5 : Idle15.IsChecked == true ? 15 : 0;
-        w.PauseWhenCovered = WpCovered.IsChecked == true;
-        w.PauseWhenFullscreen = WpFullscreen.IsChecked == true;
-        w.PauseWhenLocked = WpLocked.IsChecked == true;
-        w.FrameRateLimit = Fps30.IsChecked == true ? 30 : Fps120.IsChecked == true ? 120 : 60;
-        w.AmbientFrameRate = Amb15.IsChecked == true ? 15 : Amb24.IsChecked == true ? 24 : Amb60.IsChecked == true ? 60 : 30;
-        w.RenderScale = Res50.IsChecked == true ? 0.5 : Res75.IsChecked == true ? 0.75 : 1.0;
-        SyncMirrors();
-        UpdateValueLabels();
         _wallpaper.Apply();
         QueueSave();
     }
 
-    /// <summary>Home repeats a few controls from other pages; keep both copies in step.</summary>
-    void SyncMirrors()
+    void Quality_Click(object sender, RoutedEventArgs e)
     {
-        _loading = true;
         var w = _settings.Wallpaper;
-        HomeSmart.IsChecked = ModeSmart.IsChecked = w.Mode == WallpaperMode.Smart;
-        HomeAnimated.IsChecked = ModeAnimated.IsChecked = w.Mode == WallpaperMode.Animated;
-        HomeStatic.IsChecked = ModeStatic.IsChecked = w.Mode == WallpaperMode.Static;
-        QuickPointer.IsChecked = WpInteractive.IsChecked = w.Interactive;
-        QuickMusic.IsChecked = WpMusic.IsChecked = w.AudioReactive;
-        _loading = false;
-    }
-
-    void HomeMode_Click(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        _settings.Wallpaper.Mode = HomeStatic.IsChecked == true ? WallpaperMode.Static : HomeAnimated.IsChecked == true ? WallpaperMode.Animated : WallpaperMode.Smart;
-        _settings.Wallpaper.Enabled = true;
-        WpEnabled.IsChecked = true;
-        SyncMirrors();
+        (w.RenderScale, w.AmbientFrameRate, w.FrameRateLimit) =
+            QualityLight.IsChecked == true ? (0.5, 24, 30) : QualityBest.IsChecked == true ? (1.0, 30, 60) : (0.75, 30, 60);
         _wallpaper.Apply();
         QueueSave();
-    }
-
-    void Quick_Click(object sender, RoutedEventArgs e)
-    {
-        if (_loading) return;
-        _settings.Wallpaper.Interactive = QuickPointer.IsChecked == true;
-        _settings.Wallpaper.AudioReactive = QuickMusic.IsChecked == true;
-        _settings.Dock.WindowPreviews = QuickPreviews.IsChecked == true;
-        _settings.Dock.HideWindowsTaskbar = QuickTaskbar.IsChecked == true;
-        _loading = true;
-        Previews.IsChecked = _settings.Dock.WindowPreviews;
-        HideTaskbar.IsChecked = _settings.Dock.HideWindowsTaskbar;
-        _loading = false;
-        SyncMirrors();
-        _wallpaper.Apply();
-        _dock.ApplySettings();
-        QueueSave();
-    }
-
-    void ResetColor_Click(object sender, RoutedEventArgs e)
-    {
-        _loading = true;
-        WpHue.Value = 0; WpSat.Value = 1; WpBright.Value = 1;
-        _loading = false;
-        Wallpaper_Changed(sender, e);
     }
 
     void QueueSave()
@@ -417,18 +316,7 @@ public partial class SettingsWindow : Window
 
     void UpdateStatus()
     {
-        string key = _wallpaper.StatusText switch
-        {
-            "Animated" => "H.StatusAnimated",
-            "Eco" => "H.StatusEco",
-            "Static" => "H.StatusStatic",
-            "Error" => "H.Danger",
-            _ => "H.StatusPaused",
-        };
-        foreach (var dot in new[] { StatusDot, HeroPillDot, PowerDot }) dot.SetResourceReference(Shape.FillProperty, key);
-        StatusText.Text = HeroPillText.Text = PowerTitle.Text = HomeNowTitle.Text = _wallpaper.StatusText;
-        PowerDetail.Text = HomeNowDetail.Text = _wallpaper.StatusDetail;
-        StatusSub.Text = _wallpaper.OnBattery ? $"On battery, {_wallpaper.BatteryPercent}%" : "Plugged in";
+        HomeNowDetail.Text = _wallpaper.StatusDetail;
         UpdateLivePreview();
     }
 
@@ -488,7 +376,7 @@ public partial class SettingsWindow : Window
         };
         if (dlg.ShowDialog(this) != true) return false;
         _settings.Wallpaper.VideoPath = dlg.FileName;
-        VideoPathText.Text = dlg.FileName;
+        VideoPathText.Text = Path.GetFileName(dlg.FileName);
         return true;
     }
 
@@ -502,21 +390,6 @@ public partial class SettingsWindow : Window
         NoPins.Visibility = _pins.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         foreach (var a in _allApps) a.Refresh();
     }
-
-    void MovePin(PinnedApp pin, int delta)
-    {
-        int i = _settings.Pinned.IndexOf(pin);
-        int j = i + delta;
-        if (i < 0 || j < 0 || j >= _settings.Pinned.Count) return;
-        (_settings.Pinned[i], _settings.Pinned[j]) = (_settings.Pinned[j], _settings.Pinned[i]);
-        _settings.Save();
-        _dock.Rebuild();
-        RefreshPins();
-        RefreshMiniDocks();
-    }
-
-    void PinUp_Click(object sender, RoutedEventArgs e) { if ((sender as Button)?.Tag is PinRow r) MovePin(r.Pin, -1); }
-    void PinDown_Click(object sender, RoutedEventArgs e) { if ((sender as Button)?.Tag is PinRow r) MovePin(r.Pin, +1); }
 
     void PinRemove_Click(object sender, RoutedEventArgs e)
     {
@@ -578,16 +451,6 @@ public partial class SettingsWindow : Window
         RefreshMiniDocks();
     }
 
-    void ImportTaskbar_Click(object sender, RoutedEventArgs e)
-    {
-        int added = PinImporter.ImportTaskbarPins(_settings);
-        _settings.Save();
-        _dock.Rebuild();
-        RefreshPins();
-        RefreshMiniDocks();
-        MessageBox.Show(this, added == 0 ? "No new taskbar pins were found." : $"Added {added} app(s) from the Windows taskbar.", "Harbor");
-    }
-
     // ------------------------------------------------------------------ about
 
     void Autostart_Click(object sender, RoutedEventArgs e)
@@ -595,15 +458,6 @@ public partial class SettingsWindow : Window
         Startup.SetEnabled(Autostart.IsChecked == true);
         _settings.StartWithWindows = Autostart.IsChecked == true;
         QueueSave();
-    }
-
-    void OpenSettingsFolder_Click(object sender, RoutedEventArgs e) =>
-        Process.Start(new ProcessStartInfo("explorer.exe", $"\"{AppSettings.Directory}\"") { UseShellExecute = true });
-
-    void OpenLog_Click(object sender, RoutedEventArgs e)
-    {
-        var log = Path.Combine(Log.Directory, "harbor.log");
-        if (File.Exists(log)) Process.Start(new ProcessStartInfo(log) { UseShellExecute = true });
     }
 
     void OpenNotices_Click(object sender, RoutedEventArgs e)
@@ -641,7 +495,6 @@ public partial class SettingsWindow : Window
         public SceneInfo Info { get; } = info;
         public string Name => Info.Name;
         public string Description => Info.Description;
-        public string CostLabel => Info.Cost switch { SceneCost.Low => "Light", SceneCost.Medium => "Balanced", _ => "Rich" };
         public Visibility VideoGlyph => Info.UsesVideo ? Visibility.Visible : Visibility.Collapsed;
 
         ImageSource? _preview;

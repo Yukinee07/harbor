@@ -988,11 +988,13 @@ internal sealed class DockWindow : NativeWindow
         open?.OnMove(x, y);
 
         bool interactive = !_autoHidden && !_hiddenByFullscreen;
-        bool inside = (interactive && (_hovering ? InHoverExitZone(x, y) : InHotZone(x, y))) || _pressed != null || _menuOpen || _previewOpen
-                      || inPanelZone || panelPressed;
-        if (inside)
+        bool overDock = interactive && (_hovering ? InHoverExitZone(x, y) : InHotZone(x, y));
+        // Only what's really under the pointer takes clicks. This window covers most of the screen, so counting an open
+        // menu or preview here meant one that failed to close would swallow every click on the desktop.
+        bool takesClicks = overDock || _pressed != null || inPanelZone || panelPressed;
+        SetClickThrough(!takesClicks);
+        if (takesClicks || _menuOpen || _previewOpen)
         {
-            SetClickThrough(false);
             if (!_hovering)
             {
                 _hovering = true;
@@ -1023,10 +1025,9 @@ internal sealed class DockWindow : NativeWindow
                 BeginDrag();
             if (_dragging) UpdateDrag(x, y);
         }
-        else
+        else if (_hovering)
         {
-            SetClickThrough(true);
-            if (_hovering) EndHover();
+            EndHover();
         }
 
         if (OpenOne is { IsPressed: false })

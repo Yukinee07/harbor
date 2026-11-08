@@ -2,13 +2,14 @@ namespace Harbor.Wallpaper;
 
 internal enum SceneCost { Low, Medium, High }
 
-internal sealed record SceneInfo(string Id, string Name, string Description, SceneCost Cost, bool UsesVideo = false, bool UsesSimulation = false, bool MusicReactive = true);
+internal sealed record SceneInfo(string Id, string Name, string Description, SceneCost Cost, bool UsesVideo = false, bool UsesSimulation = false, bool MusicReactive = true, bool UsesBake = false);
 
 internal static class SceneCatalog
 {
     public static readonly SceneInfo[] All =
     {
         new("aurora", "Aurora", "Northern lights over mountain ridges. The lights lean toward your cursor.", SceneCost.Medium),
+        new("sakura", "Sakura", "Cherry trees in full bloom beside a still lake. Move the mouse to blow the falling petals around.", SceneCost.Medium, UsesBake: true),
         new("pool", "Pool", "A water surface you can touch. The cursor leaves a wake, clicks splash, rain falls softly.", SceneCost.Medium, UsesSimulation: true),
         new("silk", "Silk", "Slow folds of satin in dusk colours. The cursor twists the fabric like a finger in liquid.", SceneCost.High),
         new("nebula", "Nebula", "Drifting gas clouds and star layers. A gentle gravitational lens follows the cursor.", SceneCost.Medium),

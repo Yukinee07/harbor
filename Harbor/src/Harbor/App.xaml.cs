@@ -24,7 +24,7 @@ public partial class App : Application
     TrayIcon? _tray;
     SettingsWindow? _settingsWindow;
     PreviewController? _previews;
-    bool _shuttingDown;
+    bool _shuttingDown, _restarting;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -33,10 +33,17 @@ public partial class App : Application
         System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
         base.OnStartup(e);
 
+        if (e.Args.Length == 2 && e.Args[0] == "--watch" && int.TryParse(e.Args[1], out int watched))
+        {
+            WatchForCrash(watched);
+            Shutdown();
+            return;
+        }
+
         // Developer aid: harbor.exe --render-previews <folder> [seconds] writes a PNG still of every scene.
         if (e.Args.Length >= 2 && e.Args[0] == "--render-previews")
         {
-            RenderPreviews(e.Args[1], e.Args.Length > 2 && float.TryParse(e.Args[2], out var t) ? t : 23.5f);
+            RenderPreviews(e.Args[1], e.Args.Length > 2 && float.TryParse(e.Args[2], out var t) ? t : 23.5f, e.Args.Length > 3 ? e.Args[3] : null);
             Shutdown();
             return;
         }
@@ -69,10 +76,13 @@ public partial class App : Application
             return;
         }
 
+        StartCrashWatcher();
+
         DispatcherUnhandledException += (_, ex) =>
         {
             Log.Error("Unhandled UI exception", ex.Exception);
             ex.Handled = true; // keep the dock alive; the error is logged
+            if (ex.Exception is OutOfMemoryException && ex.Exception.StackTrace?.Contains("DUCE") == true) RestartAfterDrawingFailure();
         };
         AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
         {
@@ -122,7 +132,8 @@ public partial class App : Application
         {
             // Developer aid: shows a settings page for a while without taking focus, then closes it.
             string page = e.Args.SkipWhile(a => a != "--test-settings").Skip(1).FirstOrDefault() ?? "home";
-            var open = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+            int delay = int.TryParse(e.Args.SkipWhile(a => a != "--test-settings").Skip(2).FirstOrDefault(), out int seconds) ? seconds : 20;
+            var open = new DispatcherTimer { Interval = TimeSpan.FromSeconds(delay) };
             open.Tick += (_, _) =>
             {
                 open.Stop();
@@ -193,7 +204,8 @@ public partial class App : Application
                 menu.Items.Add(Menus.Item("Hide this button", () => { }, "\uE711"));
                 menu.Items.Add(Menus.Item("Quit Harbor", () => { }, "\uE7E8"));
                 var anchor = dock.GetItemScreenRect(item);
-                Menus.Show(menu, null, anchor, takeFocus: false);
+                dock.SetMenuOpen(true);
+                Menus.Show(menu, () => dock.SetMenuOpen(false), anchor, takeFocus: false);
                 After(0.6, () =>
                 {
                     if (PresentationSource.FromVisual(menu) is System.Windows.Interop.HwndSource src)
@@ -204,6 +216,7 @@ public partial class App : Application
                 });
                 After(Number("--test-menu", 2, 2000) / 1000.0, () => menu.IsOpen = false);
             });
+        if (args.Contains("--test-restart")) After(2, RestartAfterDrawingFailure);
         if (args.Contains("--test-screens"))
             After(3, () =>
             {
@@ -222,16 +235,66 @@ public partial class App : Application
             });
     }
 
+    static void StartCrashWatcher()
+    {
+        try
+        {
+            if (Environment.ProcessPath is { } exe)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, $"--watch {Environment.ProcessId}") { UseShellExecute = false, CreateNoWindow = true })?.Dispose();
+        }
+        catch (Exception ex) { Log.Warn("Could not start the crash watcher: " + ex.Message); }
+    }
+
+    /// <summary>
+    /// Runs in a small second process and does nothing until Harbor ends. A crash can happen while the Windows taskbar is hidden,
+    /// and a process that has crashed can't put it back, so this does: it restores the taskbar and starts Harbor again. Quitting
+    /// and ending the task in Task Manager are both left alone, and a Harbor that keeps dying within seconds isn't restarted.
+    /// </summary>
+    static void WatchForCrash(int pid)
+    {
+        System.Diagnostics.Process target;
+        try
+        {
+            target = System.Diagnostics.Process.GetProcessById(pid);
+            _ = target.Handle; // the exit code can only be read later if this is opened now
+        }
+        catch { return; }
+        Native.SetProcessWorkingSetSize(Native.GetCurrentProcess(), -1, -1);
+        target.WaitForExit();
+        uint code = unchecked((uint)target.ExitCode);
+        bool crashed = (code & 0xF0000000) is 0xC0000000 or 0xE0000000 || code is 0x80131506 or 0x80131623;
+        if (!crashed) return;
+        Log.Warn($"Harbor crashed (exit code 0x{code:X8})");
+        TaskbarController.RecoverFromCrash();
+        if ((target.ExitTime - target.StartTime).TotalSeconds >= 30 && Environment.ProcessPath is { } exe)
+            System.Diagnostics.Process.Start(exe, "--recovered")?.Dispose();
+    }
+
+    /// <summary>
+    /// When the PC runs very short of memory, WPF's link to its drawing thread can fail, and it never recovers: every menu and
+    /// window fails from then on. A fresh start is the only cure. The wait stops a PC that's still short of memory from looping.
+    /// </summary>
+    void RestartAfterDrawingFailure()
+    {
+        if (_restarting) return;
+        _restarting = true;
+        double uptime = (DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalSeconds;
+        Log.Warn("WPF can no longer draw; restarting Harbor");
+        var wait = new DispatcherTimer { Interval = TimeSpan.FromSeconds(Math.Max(1, 45 - uptime)) };
+        wait.Tick += (_, _) => { wait.Stop(); Shutdown(); };
+        wait.Start();
+    }
+
     void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle)
             Dispatcher.BeginInvoke(() => ThemeManager.Apply(_settings.Dock));
     }
 
-    static void RenderPreviews(string folder, float time)
+    static void RenderPreviews(string folder, float time, string? only)
     {
         Directory.CreateDirectory(folder);
-        foreach (var scene in SceneCatalog.All.Where(s => !s.UsesVideo))
+        foreach (var scene in SceneCatalog.All.Where(s => !s.UsesVideo && (only == null || s.Id == only)))
         {
             const int w = 1280, h = 800;
             PreviewRenderer.RenderEach(new[] { scene.Id }, w, h, time, (id, px) =>
@@ -458,38 +521,11 @@ public partial class App : Application
         else menu.Items.Add(Menus.Item("Keep in Dock", () => dock.Pin(item), ""));
         if (exe != null && File.Exists(exe))
             menu.Items.Add(Menus.Item("Show in File Explorer", () => dock.OpenFileLocation(item), ""));
-        menu.Items.Add(Menus.Item("Change icon…", () => ChooseIcon(item), ""));
-        if (_settings.CustomIcons.ContainsKey(item.Key))
-            menu.Items.Add(Menus.Item("Restore original icon", () => dock.SetCustomIcon(item, null), ""));
 
         if (windows.Count > 0)
         {
             menu.Items.Add(new Separator());
             menu.Items.Add(Menus.Item(windows.Count > 1 ? $"Close all windows ({windows.Count})" : "Close window", () => dock.CloseAll(item), ""));
-        }
-    }
-
-    void ChooseIcon(DockItem item)
-    {
-        var dlg = new OpenFileDialog
-        {
-            Title = $"Choose an icon for {item.Name}",
-            Filter = "Images and icons|*.png;*.ico;*.jpg;*.jpeg;*.bmp;*.exe;*.dll|All files|*.*",
-        };
-        if (dlg.ShowDialog() != true) return;
-        // Copy into Harbor's folder so the icon survives the original being moved or deleted.
-        var dir = Path.Combine(AppSettings.Directory, "icons");
-        Directory.CreateDirectory(dir);
-        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(item.Key)))[..12];
-        var target = Path.Combine(dir, hash + Path.GetExtension(dlg.FileName));
-        try
-        {
-            File.Copy(dlg.FileName, target, overwrite: true);
-            _dock?.SetCustomIcon(item, target);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Custom icon failed", ex);
         }
     }
 
@@ -513,6 +549,7 @@ public partial class App : Application
             Log.Info("Harbor exited");
         }
         _singleInstance?.Dispose();
+        if (_restarting && Environment.ProcessPath is { } exe) System.Diagnostics.Process.Start(exe, "--recovered");
         base.OnExit(e);
     }
 }

@@ -77,6 +77,7 @@ internal sealed class WallpaperEngine : IDisposable
     readonly List<Surface> _surfaces = new();
     VideoSource? _video;
     string? _videoPath;
+    BakedLayers? _baked;
     DesktopAttach.Target? _target;
     IntPtr _timer;
     double _time;
@@ -658,6 +659,15 @@ internal sealed class WallpaperEngine : IDisposable
         var info = SceneCatalog.Get(_config.Scene);
         bool video = info.UsesVideo;
 
+        // Painted once when the scene is first shown, and let go when another scene takes over.
+        if (info.UsesBake && _baked == null && _surfaces.Count > 0)
+            _baked = SakuraPainter.Bake(_device, _surfaces.Max(s => s.Screen.Width));
+        else if (!info.UsesBake && _baked != null)
+        {
+            _baked.Dispose();
+            _baked = null;
+        }
+
         float scale = fullQuality ? 1f : Math.Clamp(_config.RenderScale, 0.25f, 1f);
         foreach (var s in _surfaces)
             if (!s.Lost && (fullQuality || !IsCovered(s)))
@@ -669,6 +679,7 @@ internal sealed class WallpaperEngine : IDisposable
         _ctx.PSSetSampler(0, _sampler);
         _ctx.PSSetSampler(1, _wrapSampler);
         _ctx.PSSetShaderResource(1, _noiseView!);
+        if (_baked != null) _ctx.PSSetShaderResources(3, _baked.Views);
 
         foreach (var s in _surfaces)
         {
@@ -745,6 +756,8 @@ internal sealed class WallpaperEngine : IDisposable
 
     void DisposeDevice()
     {
+        _baked?.Dispose();
+        _baked = null;
         foreach (var ps in _scenes.Values) ps.Dispose();
         _scenes.Clear();
         foreach (var ps in _simShaders.Values) ps.Dispose();

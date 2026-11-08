@@ -242,7 +242,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" CornerRadius="6" Padding="12,5" Background="Transparent" Margin="1">
+                    <Border x:Name="Bd" CornerRadius="8" Padding="13,5" Background="Transparent">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -250,8 +250,7 @@
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Hover}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Accent}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource H.AccentText}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Pressed}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -259,44 +258,24 @@
         </Setter>
     </Style>
 
-    <Style x:Key="H.Nav" TargetType="RadioButton">
+    <Style x:Key="H.Tab" TargetType="RadioButton">
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource H.Focus}"/>
-        <Setter Property="Foreground" Value="{DynamicResource H.Text}"/>
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource H.TextDim}"/>
+        <Setter Property="FontSize" Value="13.5"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" CornerRadius="6" Height="38" Padding="12,0" Margin="0,1" Background="Transparent">
-                        <Grid>
-                            <Border x:Name="Pill" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left" Margin="-9,0,0,0"
-                                    Background="{DynamicResource H.Accent}" Opacity="0"/>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="{DynamicResource H.Icons}" FontSize="16" Margin="0,0,14,0" VerticalAlignment="Center"/>
-                                <ContentPresenter VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
+                    <Border x:Name="Bd" CornerRadius="10" Padding="20,6" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Hover}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource H.Text}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Hover}"/>
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Pill" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Pill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource H.Pressed}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource H.Text}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -313,8 +292,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" CornerRadius="7" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}"
-                            BorderBrush="{DynamicResource H.Border}" BorderThickness="1">
+                    <Border x:Name="Bd" CornerRadius="9" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -377,36 +355,9 @@
     <!-- A group of related settings: one translucent container with hairline dividers inside. -->
     <Style x:Key="H.Panel" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource H.Group}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource H.GroupBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="18,4"/>
-        <Setter Property="Margin" Value="0,0,0,14"/>
-    </Style>
-
-    <Style x:Key="H.SectionTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource H.Display}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{DynamicResource H.Text}"/>
-        <Setter Property="Margin" Value="2,10,0,8"/>
-    </Style>
-
-    <Style x:Key="H.PageTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{DynamicResource H.Display}"/>
-        <Setter Property="FontSize" Value="30"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Margin" Value="2,0,0,4"/>
-    </Style>
-
-    <Style x:Key="H.PageLead" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Foreground" Value="{DynamicResource H.TextDim}"/>
-        <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="MaxWidth" Value="620"/>
-        <Setter Property="HorizontalAlignment" Value="Left"/>
-        <Setter Property="Margin" Value="2,0,0,22"/>
-        <Setter Property="LineHeight" Value="21"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="Padding" Value="20,4"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
     </Style>
 
     <Style x:Key="H.TextBox" TargetType="TextBox">
@@ -415,8 +366,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" CornerRadius="7" Padding="10,7" Background="{DynamicResource H.Hover}"
-                            BorderBrush="{DynamicResource H.Border}" BorderThickness="1">
+                    <Border x:Name="Bd" CornerRadius="10" Padding="12,8" Background="{DynamicResource H.Hover}"
+                            BorderBrush="Transparent" BorderThickness="1">
                         <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>

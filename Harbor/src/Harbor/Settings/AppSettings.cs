@@ -86,7 +86,6 @@ public sealed class AppSettings
     public DockSettings Dock { get; set; } = new();
     public WallpaperSettings Wallpaper { get; set; } = new();
     public List<PinnedApp> Pinned { get; set; } = new();
-    public Dictionary<string, string> CustomIcons { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool StartWithWindows { get; set; }
     public bool FirstRunDone { get; set; }
 
@@ -112,7 +111,6 @@ public sealed class AppSettings
                 var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path), s_json);
                 if (s != null)
                 {
-                    s.CustomIcons = new Dictionary<string, string>(s.CustomIcons, StringComparer.OrdinalIgnoreCase);
                     Migrate(s);
                     return s;
                 }

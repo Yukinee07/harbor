@@ -22,6 +22,9 @@ cbuffer Frame : register(b0)
 Texture2D    SourceTex : register(t0);
 Texture2D    NoiseTex : register(t1);      // 256x256 tileable random values
 Texture2D    SimTex : register(t2);        // simulation state for simulated scenes
+Texture2D    BakeFar : register(t3);       // layers a scene painted once, premultiplied alpha
+Texture2D    BakeTree : register(t4);
+Texture2D    BakeNear : register(t5);
 SamplerState LinearClamp : register(s0);
 SamplerState LinearWrap : register(s1);
 

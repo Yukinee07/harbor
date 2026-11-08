@@ -97,6 +97,7 @@ internal sealed class LivePreview : IDisposable
             using var staging = device.CreateTexture2D(new Texture2DDescription(Format.B8G8R8A8_UNorm, (uint)_width, (uint)_height, 1, 1, BindFlags.None, ResourceUsage.Staging, CpuAccessFlags.Read, 1, 0, ResourceOptionFlags.None));
 
             string? loaded = null;
+            BakedLayers? baked = null;
             ID3D11PixelShader? ps = null, sim = null;
             ID3D11Texture2D[]? simTex = null;
             ID3D11RenderTargetView[]? simRtv = null;
@@ -120,6 +121,8 @@ internal sealed class LivePreview : IDisposable
                     ps?.Dispose(); sim?.Dispose(); ps = null; sim = null;
                     string src = common + "\n" + WallpaperEngine.ReadResource(info.Id + ".hlsl") + "\n" + tail;
                     ps = device.CreatePixelShader(WallpaperEngine.Compile(src, "PSMain", "ps_5_0", info.Id));
+                    baked?.Dispose();
+                    baked = info.UsesBake ? SakuraPainter.Bake(device, _width) : null;
                     if (info.UsesSimulation)
                     {
                         sim = device.CreatePixelShader(WallpaperEngine.Compile(src, "PSSim", "ps_5_0", info.Id + "-sim"));
@@ -171,6 +174,7 @@ internal sealed class LivePreview : IDisposable
                 ctx.PSSetSampler(0, clamp);
                 ctx.PSSetSampler(1, wrap);
                 ctx.PSSetShaderResource(1, noiseView);
+                if (baked != null) ctx.PSSetShaderResources(3, baked.Views);
                 if (sim != null && simRtv != null && simSrv != null)
                 {
                     ctx.PSSetShader(sim);
@@ -210,7 +214,7 @@ internal sealed class LivePreview : IDisposable
                 int sleep = 50 - (int)((clock.Elapsed.TotalSeconds - now) * 1000);
                 if (sleep > 0) Thread.Sleep(sleep);
             }
-            ps?.Dispose(); sim?.Dispose();
+            ps?.Dispose(); sim?.Dispose(); baked?.Dispose();
             if (simTex != null) { foreach (var x in simSrv!) x.Dispose(); foreach (var x in simRtv!) x.Dispose(); foreach (var x in simTex) x.Dispose(); }
         }
         catch (Exception ex)

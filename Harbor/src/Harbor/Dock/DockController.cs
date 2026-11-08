@@ -336,7 +336,6 @@ internal sealed class DockController : IDisposable
 
     string? IconSource(DockItem item)
     {
-        if (_settings.CustomIcons.TryGetValue(item.Key, out var custom) && File.Exists(custom)) return custom;
         switch (item.Kind)
         {
             case DockItemKind.RecycleBin: return RecycleBinId;
@@ -571,17 +570,6 @@ internal sealed class DockController : IDisposable
         _settings.Dock.IconSize = Math.Clamp(_settings.Dock.IconSize + direction * 4, DockLimits.MinIcon, DockLimits.MaxIcon);
         foreach (var dock in _docks) dock.ApplySettings(_settings.Dock);
         Save();
-    }
-
-    public void SetCustomIcon(DockItem item, string? file)
-    {
-        var old = IconSource(item);
-        if (file == null) _settings.CustomIcons.Remove(item.Key);
-        else _settings.CustomIcons[item.Key] = file;
-        if (old != null) Catalog.Invalidate(old);
-        item.Icon = null;
-        Save();
-        Rebuild();
     }
 
     /// <summary>Tells listeners (the settings window) that settings changed somewhere else.</summary>
