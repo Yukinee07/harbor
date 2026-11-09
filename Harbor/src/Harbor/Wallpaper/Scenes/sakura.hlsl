@@ -131,7 +131,7 @@ float3 scene(float2 uv, float2 p)
     float active = MouseActive * Intensity;
     float2 look = (Mouse - 0.5) * active;
     float2 gust = clamp(MouseVel * float2(1.0, -1.0), -2.0, 2.0) * 0.055 * active;
-    float breeze = sin(t * 0.31) * 0.6 + sin(t * 0.13 + 1.7) * 0.4 + Audio.x * 0.8;
+    float breeze = sin(t * 0.31) * 0.6 + sin(t * 0.13 + 1.7) * 0.4;
 
     float2 b = toBake(uv);
     float2 back = (b - 0.5) * 0.985 + 0.5 - look * float2(0.005, 0.003);
@@ -192,7 +192,6 @@ float3 scene(float2 uv, float2 p)
     float shafts = noise(dir * 7.0 + float2(t * 0.03, 3.0)) * noise(dir * 17.0 - float2(t * 0.02, 9.0));
     col += float3(1.0, 0.90, 0.78) * shafts * exp(-dist * 1.6) * smoothstep(0.03, 0.4, dist) * 0.13;
 
-    col *= 1.0 + Audio.w * 0.05;
     float v = smoothstep(1.35, 0.35, length((uv - 0.5) * float2(1.15, 1.05)));
     return col * lerp(0.84, 1.0, v);
 }

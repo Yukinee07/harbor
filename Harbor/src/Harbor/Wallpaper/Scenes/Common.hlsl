@@ -13,7 +13,6 @@ cbuffer Frame : register(b0)
     float  Aspect;        // width / height
     float  MouseActive;   // 0..1, fades out when interactivity is off
     float  Interact;      // 0..1, rises while the cursor is moving over the desktop
-    float4 Audio;         // x bass, y mids, z treble, w level; all 0 when music reactivity is off
     float4 Grade;         // x: hue shift (radians), y: saturation, z: brightness, w: unused
     float4 Params;        // scene specific
     float4 Ripples[4];    // xy: uv, z: age in seconds, w: strength (0 = unused)

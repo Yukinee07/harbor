@@ -59,7 +59,7 @@ float3 scene(float2 uv, float2 p)
         float curtain = exp(-max(above, 0.0) * (4.5 + i)) * smoothstep(-0.015, 0.02, above);
         float glow = exp(-abs(above) * 22.0) * 0.6;
         float energy = (curtain * (0.35 + 0.9 * rays) + glow) * (0.55 + 0.45 * fold);
-        energy *= (1.0 + pull * 1.4) * (1.0 + Audio.x * 0.9) + rays * Audio.z * 0.6;
+        energy *= 1.0 + pull * 1.4;
 
         float3 tint = lerp(float3(0.15, 1.0, 0.55), float3(0.35, 0.55, 1.0), saturate(above * 3.0 + i * 0.25));
         tint = lerp(tint, float3(0.85, 0.30, 0.85), saturate(above * 2.2 - 0.4));

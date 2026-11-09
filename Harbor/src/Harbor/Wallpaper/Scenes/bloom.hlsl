@@ -29,7 +29,7 @@ float3 scene(float2 uv, float2 p)
         c += (i == 0 ? toM * 0.6 : -toM / dm * 0.07 * exp(-dm * 3.0)) * active;
         // Inverse-distance weights blend every point everywhere: no edges, just a smooth mesh gradient.
         float d2 = dot(p - c, p - c);
-        float w = 1.0 / pow(d2 + 0.015 - Audio.x * 0.006 * (i == 0 ? 1.0 : 0.4), 1.6);
+        float w = 1.0 / pow(d2 + 0.015, 1.6);
         acc += colors[i] * w;
         wsum += w;
     }
@@ -37,7 +37,6 @@ float3 scene(float2 uv, float2 p)
     // Gentle luminance falloff toward the corners and a printed grain.
     col *= lerp(0.78, 1.0, smoothstep(1.2, 0.2, length((uv - 0.5) * float2(1.1, 1.0))));
     col += ripples(p) * 0.04;
-    col *= 1.0 + Audio.w * 0.12;
     col *= 0.97 + 0.03 * hash12(uv * Resolution * 0.5);
     return col;
 }

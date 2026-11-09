@@ -68,7 +68,6 @@ float3 scene(float2 uv, float2 p)
     float3 near = petalLayer(p, 3.2, 0.7, t, 2.0, gust, a);
     col = lerp(col, near, a);
 
-    col *= 1.0 + Audio.w * 0.06;
     float v = smoothstep(1.4, 0.3, length((uv - 0.5) * float2(1.1, 1.0)));
     return col * lerp(0.82, 1.0, v);
 }

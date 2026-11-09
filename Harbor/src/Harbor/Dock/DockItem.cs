@@ -3,7 +3,7 @@ using Harbor.Settings;
 
 namespace Harbor.Dock;
 
-internal enum DockItemKind { App, Start, RecycleBin, Separator, Media, Harbor, Clock }
+internal enum DockItemKind { App, Start, RecycleBin, Separator, Media, Harbor, Clock, Pomodoro }
 
 /// <summary>One slot in the dock: a pinned app, a running app, or a built-in button.</summary>
 internal sealed class DockItem
@@ -30,6 +30,11 @@ internal sealed class DockItem
 
     /// <summary>Launch in progress: the icon bounces until a window shows up or the timeout ends.</summary>
     public DateTime LaunchingUntil { get; set; }
+
+    // For the Pomodoro button: how much time is left, 1 down to 0.
+    public float TimerFraction { get; set; } = 1;
+    public bool TimerRunning { get; set; }
+    public bool TimerOnBreak { get; set; }
 
     public override string ToString() => $"{Kind}:{Name} ({Windows.Count} windows)";
 }

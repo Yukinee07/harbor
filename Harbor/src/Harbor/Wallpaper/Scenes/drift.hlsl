@@ -44,7 +44,6 @@ float3 scene(float2 uv, float2 p)
     col += bokehLayer(pp - par * 0.025, 5.5, 0.050, t, m, active * 0.8, 1.0) * 0.46;
     col += bokehLayer(pp - par * 0.045, 9.0, 0.070, t, m, active * 0.6, 2.0) * 0.38;
     col += float3(1.0, 0.6, 0.4) * mouseInfluence(p, 0.12) * 0.05;
-    col *= 1.0 + Audio.y * 0.35 + Audio.x * 0.2;
 
     float v = smoothstep(1.3, 0.25, length((uv - 0.5) * float2(1.1, 1.0)));
     return col * lerp(0.65, 1.0, v);

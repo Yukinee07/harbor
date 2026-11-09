@@ -10,7 +10,7 @@ float terrain(float2 p, float t)
     float2 d = p - m;
     h += 0.45 * exp(-dot(d, d) * 14.0) * active;
     h += ripples(p) * 0.25;
-    return h * (1.0 + Audio.x * 0.25);
+    return h;
 }
 
 float3 scene(float2 uv, float2 p)

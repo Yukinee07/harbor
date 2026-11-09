@@ -61,7 +61,7 @@ float3 scene(float2 uv, float2 p)
         float2 A = pts[ring[e]], B = pts[ring[(e + 1) % 8]];
         lines += smoothstep(1.5 * px, 0.0, segment(q, A, B)) * smoothstep(1.45, 0.6, length(A - B)) * 0.8;
     }
-    col += float3(0.35, 0.65, 0.95) * saturate(lines) * (0.32 + Audio.z * 0.5);
+    col += float3(0.35, 0.65, 0.95) * saturate(lines) * 0.32;
 
     // Links from the cursor to stars within reach.
     float reach = 0;
@@ -77,7 +77,7 @@ float3 scene(float2 uv, float2 p)
     {
         float d = length(q - pts[s2]);
         float tw = 0.7 + 0.3 * sin(t * 2.0 + hash12(floor(pts[s2])) * 30.0);
-        col += float3(0.85, 0.92, 1.0) * (smoothstep(2.6 * px, 0.0, d) + exp(-d * d * 40.0) * 0.25) * tw * (1.0 + Audio.x * 0.8);
+        col += float3(0.85, 0.92, 1.0) * (smoothstep(2.6 * px, 0.0, d) + exp(-d * d * 40.0) * 0.25) * tw;
     }
 
     col += float3(0.6, 0.45, 0.3) * mouseInfluence(p, 0.15) * 0.08;

@@ -20,7 +20,7 @@ float3 scene(float2 uv, float2 p)
         float2 c = float2(x, y);
         float2 toM = m - c;
         c += toM * 0.22 * exp(-length(toM) * 3.0) * active;
-        float r = 0.05 + h.y * 0.07 + Audio.x * 0.02;
+        float r = 0.05 + h.y * 0.07;
         r *= 1.0 + 0.6 * exp(-length(toM) * 6.0) * active;
         float2 d = p - c;
         field += r * r / (dot(d, d) + 1e-4);

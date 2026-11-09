@@ -43,6 +43,7 @@ public sealed class DockSettings
     public bool ShowNowPlaying { get; set; } = true;
     public bool ShowHarborButton { get; set; } = true;
     public bool ShowClock { get; set; } = true;
+    public bool ShowPomodoro { get; set; } = true;
     public bool ShowOnAllScreens { get; set; } = true;
     public bool WindowPreviews { get; set; } = true;
 }
@@ -57,7 +58,7 @@ public sealed class WallpaperSettings
     public bool Interactive { get; set; } = true;
     public double MouseStrength { get; set; } = 1.0;
     public double Speed { get; set; } = 1.0;
-    /// <summary>Frame rate while you interact with the desktop (cursor moving over it, music playing).</summary>
+    /// <summary>Frame rate while you interact with the desktop (cursor moving over it).</summary>
     public int FrameRateLimit { get; set; } = 60;
     /// <summary>Frame rate for ambient motion when nobody is interacting. Slow scenes look the same at half the cost.</summary>
     public int AmbientFrameRate { get; set; } = 30;
@@ -66,7 +67,6 @@ public sealed class WallpaperSettings
     public int StaticBelowBatteryPercent { get; set; } = 35;
     /// <summary>Freeze after this long without keyboard or mouse input (0 = never).</summary>
     public int IdleMinutes { get; set; } = 5;
-    public bool AudioReactive { get; set; } = false;
     /// <summary>Internal render resolution relative to the monitor (1.0 = native, e.g. full 4K).</summary>
     public double RenderScale { get; set; } = 0.75;
     public bool StaticOnBattery { get; set; } = true;
@@ -85,6 +85,7 @@ public sealed class AppSettings
     public int Version { get; set; } = 3;
     public DockSettings Dock { get; set; } = new();
     public WallpaperSettings Wallpaper { get; set; } = new();
+    public PomodoroSettings Pomodoro { get; set; } = new();
     public List<PinnedApp> Pinned { get; set; } = new();
     public bool StartWithWindows { get; set; }
     public bool FirstRunDone { get; set; }

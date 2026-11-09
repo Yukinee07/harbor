@@ -30,6 +30,7 @@ internal sealed class LivePreview : IDisposable
     Vector2 _click;
 
     public WriteableBitmap Bitmap { get; }
+    public int Width => _width;
 
     public LivePreview(Dispatcher ui, string scene, int width = 960, int height = 540)
     {

@@ -17,7 +17,7 @@ float3 scene(float2 uv, float2 p)
 
     // Swirl around the cursor, stronger when it moves.
     float2 d = p - m;
-    float spin = infl * (0.8 + 2.2 * saturate(length(MouseVel) * 0.8)) + Audio.x * 0.15;
+    float spin = infl * (0.8 + 2.2 * saturate(length(MouseVel) * 0.8));
     float c = cos(spin), s = sin(spin);
     float2 q = m + float2(d.x * c - d.y * s, d.x * s + d.y * c);
     q += ripples(p) * 0.012;
@@ -43,7 +43,7 @@ float3 scene(float2 uv, float2 p)
     base = lerp(base, peach, smoothstep(0.82, 1.05, f) * 0.6);
 
     float3 col = base * (0.35 + 0.85 * diff);
-    col += spec * float3(1.0, 0.86, 0.80) * (0.55 + Audio.z * 0.6);
+    col += spec * float3(1.0, 0.86, 0.80) * 0.55;
     col += rim * rose * 0.25;
     col += float3(0.95, 0.55, 0.50) * infl * 0.05;
 

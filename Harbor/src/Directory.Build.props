@@ -1,7 +1,7 @@
 <Project>
   <!-- Shared by the app and its installer, so the version and credit only live in one place. -->
   <PropertyGroup>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Product>Harbor</Product>
     <Authors>Yusuf Yunus</Authors>
     <Company>Yusuf Yunus</Company>

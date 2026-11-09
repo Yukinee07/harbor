@@ -16,7 +16,7 @@ internal enum WallpaperTier { Full, Eco, Static, Paused }
 ///   2. Is power constrained or is nobody there? Energy Saver, low battery, idle => Static (one frame, then zero work).
 ///      On battery above the threshold => Eco (lower frame rate and resolution).
 ///   3. Otherwise Full, where the engine itself runs ambient motion slowly and speeds up only while the
-///      cursor is moving over the desktop or music is driving the scene.
+///      cursor is moving over the desktop.
 /// </summary>
 internal sealed class WallpaperController : NativeWindow
 {
@@ -34,7 +34,6 @@ internal sealed class WallpaperController : NativeWindow
     int _batteryPercent = 100;
     readonly DispatcherTimer _pulse;
     int _pulses;
-    AudioAnalyzer? _audio;
 
     public WallpaperState State { get; private set; } = WallpaperState.Stopped;
     public WallpaperTier Tier { get; private set; } = WallpaperTier.Full;
@@ -193,17 +192,12 @@ internal sealed class WallpaperController : NativeWindow
             RenderScale: eco ? (float)Math.Min(w.RenderScale, 0.6) : (float)w.RenderScale,
             Hue: (float)w.Hue,
             Saturation: (float)w.Saturation,
-            Brightness: (float)w.Brightness,
-            AudioReactive: w.AudioReactive && SceneCatalog.Get(w.Scene).MusicReactive);
+            Brightness: (float)w.Brightness);
     }
 
     void Evaluate()
     {
         var config = BuildConfig();
-        // Only listen to audio while it can actually affect what's on screen.
-        bool wantAudio = config.AudioReactive && !config.Static && !config.Paused && _engine != null;
-        if (wantAudio) (_audio ??= new AudioAnalyzer()).Start(); else _audio?.Stop();
-        if (_engine != null) _engine.Audio = wantAudio ? _audio : null;
         _engine?.Apply(config);
         UpdateStatus();
     }
@@ -324,7 +318,6 @@ internal sealed class WallpaperController : NativeWindow
     public override void Dispose()
     {
         _pulse.Stop();
-        _audio?.Dispose();
         try { Windows.System.Power.PowerManager.EnergySaverStatusChanged -= OnEnergySaverChanged; } catch { }
         foreach (var h in _powerNotifications) Native.UnregisterPowerSettingNotification(h);
         if (Handle != IntPtr.Zero) Native.WTSUnRegisterSessionNotification(Handle);

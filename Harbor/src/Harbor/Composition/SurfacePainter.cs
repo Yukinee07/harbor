@@ -112,6 +112,33 @@ internal static unsafe class SurfacePainter
         }
     }
 
+    /// <summary>A coloured tile with a ring that empties as the time runs out, and a dot in the middle while it's running.</summary>
+    public static void DrawPomodoroTile(ID2D1DeviceContext dc, float size, float fraction, bool running, bool onBreak)
+    {
+        float inset = size * 0.08f, w = size - inset * 2, r = w * 0.24f;
+        var rect = new RawRectF(inset, inset, size - inset, size - inset);
+        var top = onBreak ? C4(70, 205, 150) : C4(255, 112, 92);
+        var bottom = onBreak ? C4(20, 140, 110) : C4(208, 44, 62);
+        using (var stops = dc.CreateGradientStopCollection([new GradientStop(0, top), new GradientStop(1, bottom)]))
+        using (var brush = dc.CreateLinearGradientBrush(new LinearGradientBrushProperties(new Vector2(inset, inset), new Vector2(size - inset, size - inset)), stops))
+            dc.FillRoundedRectangle(new RoundedRectangle(rect, r, r), brush);
+
+        var centre = new Vector2(size / 2);
+        float radius = size * 0.235f, thickness = MathF.Max(1.5f, size * 0.08f);
+        using (var track = dc.CreateSolidColorBrush(C4(255, 255, 255, 70)))
+            dc.DrawEllipse(new Ellipse(centre, radius, radius), track, thickness);
+        using var white = dc.CreateSolidColorBrush(C4(255, 255, 255, 250));
+        // Clockwise from twelve, drawn as a run of dots close enough to read as a solid line with round ends.
+        float sweep = MathF.Tau * Math.Clamp(fraction, 0, 1);
+        int steps = (int)MathF.Ceiling(sweep * radius / (thickness * 0.3f));
+        for (int i = 0; i <= steps && sweep > 0; i++)
+        {
+            float a = -MathF.PI / 2 + sweep * i / steps;
+            dc.FillEllipse(new Ellipse(centre + new Vector2(MathF.Cos(a), MathF.Sin(a)) * radius, thickness / 2, thickness / 2), white);
+        }
+        if (running) dc.FillEllipse(new Ellipse(centre, thickness * 0.75f, thickness * 0.75f), white);
+    }
+
     public static void DrawHarborTile(ID2D1DeviceContext dc, float size)
     {
         float inset = size * 0.08f, w = size - inset * 2, r = w * 0.24f;

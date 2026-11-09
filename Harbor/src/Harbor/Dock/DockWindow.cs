@@ -749,6 +749,9 @@ internal sealed class DockWindow : NativeWindow
                 case DockItemKind.Harbor:
                     SurfacePainter.DrawHarborTile(dc, px);
                     break;
+                case DockItemKind.Pomodoro:
+                    SurfacePainter.DrawPomodoroTile(dc, px, item.TimerFraction, item.TimerRunning, item.TimerOnBreak);
+                    break;
                 case DockItemKind.Clock:
                     var now = DateTime.Now;
                     SurfacePainter.DrawClock(dc, pxWide, px, now.ToString("t"), now.ToString("ddd d MMM"), _theme.LabelText,

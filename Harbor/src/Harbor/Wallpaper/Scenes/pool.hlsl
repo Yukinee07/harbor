@@ -35,12 +35,12 @@ float4 PSSim(VSOut i) : SV_Target
         if (r.w > 0 && r.z < 0.05) next -= drop(p, toP(r.xy), 0.02) * 2.5 * active;
     }
 
-    // Gentle rain, a little heavier on the beat when music reactivity is on.
-    float rate = 1.6 + Audio.x * 4.0;
+    // Gentle rain.
+    float rate = 1.6;
     float cell = floor(Time * rate);
     float phase = frac(Time * rate);
     float2 rain = hash22(float2(cell, 3.7)) * float2(Aspect, 1.0) - float2(Aspect * 0.5, 0.5);
-    next -= drop(p, rain, 0.008) * step(phase, 0.12) * (0.35 + Audio.x * 0.8);
+    next -= drop(p, rain, 0.008) * step(phase, 0.12) * 0.35;
 
     return float4(next, now.r, 0, 1);
 }
@@ -80,7 +80,6 @@ float3 scene(float2 uv, float2 p)
     float spec = pow(saturate(dot(reflect(-l, n), float3(0, 0, 1))), 90.0);
     float3 col = floorCol + float3(0.55, 0.75, 0.95) * fresnel * 0.6 + spec * float3(1.0, 0.97, 0.9) * 0.9;
 
-    col *= 1.0 + Audio.w * 0.08;
     float v = smoothstep(1.35, 0.3, length((uv - 0.5) * float2(1.1, 1.0)));
     return col * lerp(0.72, 1.0, v);
 }

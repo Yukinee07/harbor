@@ -48,6 +48,8 @@ internal sealed class DockController : IDisposable
     /// <summary>A dock is about to go away because its screen did.</summary>
     public event Action? DocksChanged;
     public event Action? SettingsChanged;
+    public event Action? SettingsApplied;
+    public event Action? PomodoroClicked;
     public event Action? OpenAppRequested;
 
     public DockController(AppSettings settings, Dispatcher ui)
@@ -265,7 +267,7 @@ internal sealed class DockController : IDisposable
         }
 
         bool media = _settings.Dock.ShowNowPlaying && Media.HasSession;
-        if (_settings.Dock.ShowRecycleBin || media || _settings.Dock.ShowHarborButton || _settings.Dock.ShowClock) list.Add(Get("harbor:sep-bin", DockItemKind.Separator));
+        if (_settings.Dock.ShowRecycleBin || media || _settings.Dock.ShowHarborButton || _settings.Dock.ShowClock || _settings.Dock.ShowPomodoro) list.Add(Get("harbor:sep-bin", DockItemKind.Separator));
         if (media)
         {
             var m = Get("harbor:media", DockItemKind.Media);
@@ -283,6 +285,14 @@ internal sealed class DockController : IDisposable
             var bin = Get("harbor:bin", DockItemKind.RecycleBin);
             bin.Name = "Recycle Bin";
             list.Add(bin);
+        }
+
+        if (_settings.Dock.ShowPomodoro)
+        {
+            var timer = Get("harbor:pomodoro", DockItemKind.Pomodoro);
+            timer.Name = "Pomodoro";
+            ApplyPomodoro(timer);
+            list.Add(timer);
         }
 
         if (_settings.Dock.ShowHarborButton)
@@ -405,6 +415,9 @@ internal sealed class DockController : IDisposable
                 return;
             case DockItemKind.Media:
                 Media.PlayPause();
+                return;
+            case DockItemKind.Pomodoro:
+                PomodoroClicked?.Invoke();
                 return;
             case DockItemKind.Harbor:
                 OpenAppRequested?.Invoke();
@@ -590,6 +603,38 @@ internal sealed class DockController : IDisposable
         foreach (var dock in _docks) dock.ApplySettings(_settings.Dock);
         Rebuild();
         CheckOverlap();
+        SettingsApplied?.Invoke();
+    }
+
+    // ------------------------------------------------------------------ Pomodoro button
+
+    float _timerFraction = 1;
+    bool _timerRunning, _timerOnBreak;
+
+    void ApplyPomodoro(DockItem item)
+    {
+        item.TimerFraction = _timerFraction;
+        item.TimerRunning = _timerRunning;
+        item.TimerOnBreak = _timerOnBreak;
+    }
+
+    /// <summary>Repaints the button only when the ring would visibly move, which is about once every 20 seconds of a 25 minute session.</summary>
+    public void SetPomodoro(float fraction, bool running, bool onBreak)
+    {
+        bool same = (int)(fraction * 72) == (int)(_timerFraction * 72) && running == _timerRunning && onBreak == _timerOnBreak;
+        _timerFraction = fraction;
+        _timerRunning = running;
+        _timerOnBreak = onBreak;
+        if (same || Items.FirstOrDefault(i => i.Kind == DockItemKind.Pomodoro) is not { } item) return;
+        ApplyPomodoro(item);
+        item.IconVersion++;
+        foreach (var dock in _docks) dock.Refresh(item);
+    }
+
+    public void BouncePomodoro()
+    {
+        if (Items.FirstOrDefault(i => i.Kind == DockItemKind.Pomodoro) is { } item)
+            foreach (var dock in _docks) dock.Bounce(item, 2);
     }
 
     void SetTaskbarHidden(bool hidden)

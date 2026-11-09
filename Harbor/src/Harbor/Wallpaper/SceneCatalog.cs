@@ -2,7 +2,7 @@ namespace Harbor.Wallpaper;
 
 internal enum SceneCost { Low, Medium, High }
 
-internal sealed record SceneInfo(string Id, string Name, string Description, SceneCost Cost, bool UsesVideo = false, bool UsesSimulation = false, bool MusicReactive = true, bool UsesBake = false);
+internal sealed record SceneInfo(string Id, string Name, string Description, SceneCost Cost, bool UsesVideo = false, bool UsesSimulation = false, bool UsesBake = false);
 
 internal static class SceneCatalog
 {

@@ -29,8 +29,7 @@ internal sealed record EngineConfig(
     float RenderScale,
     float Hue,
     float Saturation,
-    float Brightness,
-    bool AudioReactive);
+    float Brightness);
 
 [StructLayout(LayoutKind.Sequential)]
 internal struct FrameConstants
@@ -39,7 +38,6 @@ internal struct FrameConstants
     public float Time, Delta;
     public Vector2 Mouse, MouseVel;
     public float Intensity, Aspect, MouseActive, Interact;
-    public Vector4 Audio;
     public Vector4 Grade;
     public Vector4 Params;
     public Vector4 Ripple0, Ripple1, Ripple2, Ripple3;
@@ -87,8 +85,6 @@ internal sealed class WallpaperEngine : IDisposable
     Native.POINT _lastCursor;
     readonly Dictionary<string, ID3D11PixelShader> _simShaders = new();
 
-    /// <summary>Music analysis shared with the controller (null when music reactivity is off).</summary>
-    public AudioAnalyzer? Audio { get; set; }
     WallpaperState _state = WallpaperState.Stopped;
 
     public event Action<WallpaperState>? StateChanged;
@@ -230,13 +226,12 @@ internal sealed class WallpaperEngine : IDisposable
     }
 
     /// <summary>
-    /// Full rate only while someone is actually interacting with the desktop (or music is driving it);
+    /// Full rate only while someone is actually interacting with the desktop;
     /// otherwise the slow ambient rate. Ambient motion is gentle, so it looks the same at half the cost.
     /// </summary>
     double CurrentFps()
     {
-        bool interacting = Environment.TickCount64 - _lastInteraction < 1500
-                           || (_config.AudioReactive && (Audio?.Level ?? 0) > 0.04f);
+        bool interacting = Environment.TickCount64 - _lastInteraction < 1500;
         int fps = interacting ? Math.Max(_config.InteractiveFps, _config.AmbientFps) : _config.AmbientFps;
         return Math.Clamp(fps, 5, 240);
     }
@@ -699,7 +694,6 @@ internal sealed class WallpaperEngine : IDisposable
                 Aspect = w / (float)h,
                 MouseActive = _mouseActive,
                 Interact = _interact,
-                Audio = _config.AudioReactive && Audio != null ? new Vector4(Audio.Bass, Audio.Mid, Audio.Treble, Audio.Level) : Vector4.Zero,
                 Grade = new Vector4(_config.Hue * MathF.PI / 180f, _config.Saturation, _config.Brightness, 0),
                 Params = video && _video != null ? new Vector4(_video.Width, _video.Height, 0, 0) : Vector4.Zero,
                 Ripple0 = s.Ripples[0], Ripple1 = s.Ripples[1], Ripple2 = s.Ripples[2], Ripple3 = s.Ripples[3],

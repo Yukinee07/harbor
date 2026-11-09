@@ -43,8 +43,7 @@ float3 scene(float2 uv, float2 p)
     col += starLayer(lp - par * 0.030, 18.0, 0.05, t) * 1.2;
 
     // A faint glow where the lens sits.
-    col += float3(0.30, 0.25, 0.45) * exp(-r2 * 900.0) * active * (0.25 + Audio.x * 0.5);
-    col *= 1.0 + Audio.w * 0.15;
+    col += float3(0.30, 0.25, 0.45) * exp(-r2 * 900.0) * active * 0.25;
 
     float v = smoothstep(1.3, 0.2, length((uv - 0.5) * float2(1.1, 1.0)));
     return col * lerp(0.6, 1.0, v);

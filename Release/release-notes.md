@@ -2,18 +2,17 @@ A floating dock and live wallpaper for Windows, made by Yusuf Yunus.
 
 ## Install
 
-Download `Harbor-Setup-1.2.0.exe` below and run it. It needs no admin rights and nothing else installed.
+Download `Harbor-Setup-1.3.0.exe` below and run it. It needs no admin rights and nothing else installed.
 
 The installer isn't code signed, so Windows may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
 
 ## In this version
 
-- A new Sakura wallpaper: cherry trees in full bloom beside a still lake, with petals falling on the breeze
-- A much simpler Settings window
-- A fix for the desktop not responding to clicks after Harbor ran out of memory
-- If Harbor crashes, it now restores the Windows taskbar and starts itself again
-- The Change icon option is gone
+- A Pomodoro timer that floats on your screen, shrinks to a thin progress bar and opens when you hover it
+- A button for it in the dock, which you can turn off in Settings
+- The Settings window now fills the space when you maximize it
+- React to music has been removed
 
 ## Check the download
 
-SHA-256: `a46ee662f74828f6f75513b447b7688be7ee26c4d83d4689bf8c13e7869713cf`
+SHA-256: `5ecf91d68d36ab41e1ed50b6a4a80bbd5fa0916c97711f354bb935b54c3fc0c8`

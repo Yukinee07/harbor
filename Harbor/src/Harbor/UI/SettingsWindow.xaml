@@ -53,7 +53,7 @@
         </Border>
 
         <ScrollViewer x:Name="Scroller" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid MaxWidth="760" Margin="28,6,28,30" x:Name="Pages">
+            <Grid MaxWidth="1560" Margin="28,6,28,30" x:Name="Pages">
 
                 <!-- ================================================= WALLPAPER -->
                 <StackPanel x:Name="PageWallpaper">
@@ -92,23 +92,21 @@
 
                     <ItemsControl x:Name="SceneGallery" Margin="-6,8,-6,8">
                         <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><UniformGrid Columns="4"/></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><UniformGrid Columns="{Binding GalleryColumns, RelativeSource={RelativeSource AncestorType=Window}}"/></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Margin="6" Cursor="Hand" Background="Transparent" MouseLeftButtonUp="Scene_Click" Tag="{Binding}" ToolTip="{Binding Description}">
                                     <StackPanel>
                                         <Grid>
-                                            <Border x:Name="Picture" CornerRadius="12" Height="98" Background="#FF101014">
-                                                <Border.Clip>
-                                                    <RectangleGeometry Rect="0,0,1000,98" RadiusX="12" RadiusY="12"/>
-                                                </Border.Clip>
-                                                <Grid>
-                                                    <Image Source="{Binding Preview}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                    <TextBlock Text="&#xE714;" FontFamily="{DynamicResource H.Icons}" FontSize="24" Foreground="#99FFFFFF"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding VideoGlyph}"/>
-                                                </Grid>
+                                            <Border CornerRadius="12" Height="{Binding ThumbHeight, RelativeSource={RelativeSource AncestorType=Window}}" Background="#FF101014"/>
+                                            <Border CornerRadius="12" RenderOptions.BitmapScalingMode="HighQuality">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding Preview}" Stretch="UniformToFill"/>
+                                                </Border.Background>
                                             </Border>
+                                            <TextBlock Text="&#xE714;" FontFamily="{DynamicResource H.Icons}" FontSize="24" Foreground="#99FFFFFF"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding VideoGlyph}"/>
                                             <Border x:Name="Ring" CornerRadius="12" BorderThickness="2.5" BorderBrush="{DynamicResource H.Accent}" Visibility="Collapsed"/>
                                         </Grid>
                                         <TextBlock x:Name="Label" Text="{Binding Name}" FontSize="12.5" Margin="3,7,0,2" Foreground="{DynamicResource H.TextDim}"/>
@@ -144,18 +142,13 @@
                                 <TextBlock Text="React to my mouse" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="WpInteractive" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Wallpaper_Changed"/>
                             </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <TextBlock Text="React to music" Style="{StaticResource RowTitle}"/>
-                                <CheckBox x:Name="WpMusic" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Wallpaper_Changed"/>
-                            </Grid>
                         </StackPanel>
                     </Border>
                 </StackPanel>
 
                 <!-- ================================================= DOCK -->
                 <StackPanel x:Name="PageDock" Visibility="Collapsed">
-                    <Border CornerRadius="18" Height="160" Margin="0,0,0,14" Background="#FF101219">
+                    <Border x:Name="DockStage" CornerRadius="18" Height="160" Margin="0,0,0,14" Background="#FF101219">
                         <Grid>
                             <Grid.Clip>
                                 <RectangleGeometry x:Name="StageClip" RadiusX="18" RadiusY="18"/>
@@ -168,12 +161,12 @@
                     <Border Style="{StaticResource H.Panel}">
                         <StackPanel>
                             <Grid Style="{StaticResource Row}">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Size" Style="{StaticResource RowTitle}"/>
                                 <Slider x:Name="IconSize" Grid.Column="1" Style="{StaticResource H.Slider}" Minimum="28" Maximum="96" SmallChange="2" LargeChange="8" ValueChanged="Dock_Changed"/>
                             </Grid>
                             <Grid Style="{StaticResource Row}">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Magnification" Style="{StaticResource RowTitle}"/>
                                 <Slider x:Name="MagnifyAmount" Grid.Column="1" Style="{StaticResource H.Slider}" Minimum="0" Maximum="1.2" ValueChanged="Dock_Changed"/>
                             </Grid>
@@ -204,13 +197,13 @@
 
                     <TextBlock Text="Options" Style="{StaticResource Heading}"/>
                     <Border Style="{StaticResource H.Panel}">
-                        <UniformGrid Columns="2">
+                        <UniformGrid x:Name="OptionsGrid" Columns="2" Margin="0,0,-24,0">
                             <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Hide Windows taskbar" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="HideTaskbar" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
                             </Grid>
-                            <Grid Style="{StaticResource Row}" Margin="24,11,0,11">
+                            <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Dock on every screen" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowAllScreens" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
@@ -220,7 +213,7 @@
                                 <TextBlock Text="Window previews" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="Previews" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
                             </Grid>
-                            <Grid Style="{StaticResource Row}" Margin="24,11,0,11">
+                            <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Clock and calendar" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowClockToggle" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
@@ -230,7 +223,7 @@
                                 <TextBlock Text="Now Playing" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowMedia" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
                             </Grid>
-                            <Grid Style="{StaticResource Row}" Margin="24,11,0,11">
+                            <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Recycle Bin" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowBin" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
@@ -240,19 +233,52 @@
                                 <TextBlock Text="Start button" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowStart" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
                             </Grid>
-                            <Grid Style="{StaticResource Row}" Margin="24,11,0,11">
+                            <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                 <TextBlock Text="Harbor button" Style="{StaticResource RowTitle}"/>
                                 <CheckBox x:Name="ShowHarbor" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
                             </Grid>
+                            <Grid Style="{StaticResource Row}" Margin="0,11,24,11">
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="Pomodoro timer" Style="{StaticResource RowTitle}"/>
+                                <CheckBox x:Name="ShowPomodoroToggle" Grid.Column="1" Style="{StaticResource H.Toggle}" Click="Dock_Changed"/>
+                            </Grid>
                         </UniformGrid>
+                    </Border>
+
+                    <TextBlock Text="Pomodoro" Style="{StaticResource Heading}"/>
+                    <Border Style="{StaticResource H.Panel}">
+                        <StackPanel>
+                            <Grid Style="{StaticResource Row}">
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="Focus" Style="{StaticResource RowTitle}"/>
+                                <Border Grid.Column="1" Style="{StaticResource SegmentHost}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="Focus25" GroupName="Focus" Style="{StaticResource H.Segment}" Content="25 min" Click="Dock_Changed"/>
+                                        <RadioButton x:Name="Focus45" GroupName="Focus" Style="{StaticResource H.Segment}" Content="45 min" Click="Dock_Changed"/>
+                                        <RadioButton x:Name="Focus60" GroupName="Focus" Style="{StaticResource H.Segment}" Content="60 min" Click="Dock_Changed"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <Grid Style="{StaticResource Row}">
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="Break" Style="{StaticResource RowTitle}"/>
+                                <Border Grid.Column="1" Style="{StaticResource SegmentHost}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="Break5" GroupName="Break" Style="{StaticResource H.Segment}" Content="5 min" Click="Dock_Changed"/>
+                                        <RadioButton x:Name="Break10" GroupName="Break" Style="{StaticResource H.Segment}" Content="10 min" Click="Dock_Changed"/>
+                                        <RadioButton x:Name="Break15" GroupName="Break" Style="{StaticResource H.Segment}" Content="15 min" Click="Dock_Changed"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
 
                 <!-- ================================================= APPS -->
                 <StackPanel x:Name="PageApps" Visibility="Collapsed">
                     <TextBlock Text="In your dock" Style="{StaticResource Heading}" Margin="4,2,0,8"/>
-                    <Border Style="{StaticResource H.Panel}" Padding="10">
+                    <Border x:Name="PinnedPanel" Style="{StaticResource H.Panel}" Padding="10">
                         <StackPanel>
                             <TextBlock x:Name="NoPins" Text="Nothing here yet. Pin something from the list below." Foreground="{DynamicResource H.TextDim}" Margin="10,12"/>
                             <ItemsControl x:Name="PinnedList">

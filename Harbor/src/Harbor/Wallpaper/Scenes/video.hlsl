@@ -14,7 +14,7 @@ float3 scene(float2 uv, float2 p)
     else st.y *= videoAspect / Aspect;
 
     // Overscan 4% and shift opposite to the cursor for parallax.
-    float zoom = 1.0 + 0.04 * active + Audio.x * 0.012;
+    float zoom = 1.0 + 0.04 * active;
     st /= zoom;
     st -= (Mouse - 0.5) * 0.035 * active;
 

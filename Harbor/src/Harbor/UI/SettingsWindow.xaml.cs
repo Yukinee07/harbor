@@ -44,7 +44,10 @@ public partial class SettingsWindow : Window
             if (!ThemeManager.MicaSupported) SetResourceReference(BackgroundProperty, "H.Window");
             CenterOnPointerScreen();
         };
-        Loaded += (_, _) => CenterOnPointerScreen();
+        Loaded += (_, _) => { CenterOnPointerScreen(); FitContent(); };
+        // Not SizeChanged: the viewport figures are only up to date once the scroll viewer has reported this.
+        Scroller.ScrollChanged += (_, e) => { if (e.ViewportWidthChange != 0 || e.ViewportHeightChange != 0) FitContent(); };
+        PinnedList.SizeChanged += (_, _) => FitContent();
         StateChanged += (_, _) =>
         {
             Root.Margin = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
@@ -105,6 +108,25 @@ public partial class SettingsWindow : Window
         Native.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
     }
 
+    public static readonly DependencyProperty GalleryColumnsProperty = DependencyProperty.Register(nameof(GalleryColumns), typeof(int), typeof(SettingsWindow), new PropertyMetadata(4));
+    public static readonly DependencyProperty ThumbHeightProperty = DependencyProperty.Register(nameof(ThumbHeight), typeof(double), typeof(SettingsWindow), new PropertyMetadata(98.0));
+    public int GalleryColumns { get => (int)GetValue(GalleryColumnsProperty); set => SetValue(GalleryColumnsProperty, value); }
+    public double ThumbHeight { get => (double)GetValue(ThumbHeightProperty); set => SetValue(ThumbHeightProperty, value); }
+
+    /// <summary>Lets the pages use the room there is, so a bigger or maximized window shows bigger pictures and more of them.</summary>
+    void FitContent()
+    {
+        double width = Math.Min(Scroller.ViewportWidth - Pages.Margin.Left - Pages.Margin.Right, Pages.MaxWidth);
+        if (width <= 0) return;
+        GalleryColumns = Math.Clamp((int)(width / 190), 4, 8);
+        ThumbHeight = Math.Round(((width + 12) / GalleryColumns - 12) * 0.56);
+        Hero.Height = Math.Clamp(width * 0.39, 260, Math.Max(300, Scroller.ViewportHeight * 0.55));
+        DockStage.Height = Math.Clamp(width * 0.2, 160, 260);
+        OptionsGrid.Columns = width >= 1080 ? 3 : 2;
+        AllApps.Height = Math.Max(320, Scroller.ViewportHeight - PinnedPanel.ActualHeight - 110);
+        UpdateLivePreview();
+    }
+
     void OnDockSettingsChanged()
     {
         LoadValues();
@@ -156,7 +178,14 @@ public partial class SettingsWindow : Window
         var scene = SceneCatalog.Get(_settings.Wallpaper.Scene);
         if (want && !scene.UsesVideo)
         {
-            _live ??= new LivePreview(Dispatcher, scene.Id, 640, 360);
+            // A larger picture when the window is big enough to show one.
+            int liveWidth = Hero.ActualWidth > 1000 ? 960 : 640;
+            if (_live != null && _live.Width != liveWidth)
+            {
+                _live.Dispose();
+                _live = null;
+            }
+            _live ??= new LivePreview(Dispatcher, scene.Id, liveWidth, liveWidth * 9 / 16);
             HeroImage.Source = _live.Bitmap;
             _live.Scene = scene.Id;
             _live.Start();
@@ -234,6 +263,14 @@ public partial class SettingsWindow : Window
         Previews.IsChecked = d.WindowPreviews;
         ShowHarbor.IsChecked = d.ShowHarborButton;
         ShowClockToggle.IsChecked = d.ShowClock;
+        ShowPomodoroToggle.IsChecked = d.ShowPomodoro;
+        var pomodoro = _settings.Pomodoro;
+        Focus25.IsChecked = pomodoro.FocusMinutes <= 25;
+        Focus45.IsChecked = pomodoro.FocusMinutes is > 25 and <= 45;
+        Focus60.IsChecked = pomodoro.FocusMinutes > 45;
+        Break5.IsChecked = pomodoro.BreakMinutes <= 5;
+        Break10.IsChecked = pomodoro.BreakMinutes is > 5 and <= 10;
+        Break15.IsChecked = pomodoro.BreakMinutes > 10;
         ShowAllScreens.IsChecked = d.ShowOnAllScreens;
         ShowStart.IsChecked = d.ShowStartButton;
         ShowMedia.IsChecked = d.ShowNowPlaying;
@@ -245,7 +282,6 @@ public partial class SettingsWindow : Window
         HomeAnimated.IsChecked = w.Mode == WallpaperMode.Animated;
         HomeStatic.IsChecked = w.Mode == WallpaperMode.Static;
         WpInteractive.IsChecked = w.Interactive;
-        WpMusic.IsChecked = w.AudioReactive;
         BatEco.IsChecked = w.OnBattery == BatteryBehavior.Eco;
         BatStatic.IsChecked = w.OnBattery == BatteryBehavior.Static;
         BatFull.IsChecked = w.OnBattery == BatteryBehavior.Full;
@@ -272,6 +308,9 @@ public partial class SettingsWindow : Window
         d.WindowPreviews = Previews.IsChecked == true;
         d.ShowHarborButton = ShowHarbor.IsChecked == true;
         d.ShowClock = ShowClockToggle.IsChecked == true;
+        d.ShowPomodoro = ShowPomodoroToggle.IsChecked == true;
+        _settings.Pomodoro.FocusMinutes = Focus60.IsChecked == true ? 60 : Focus45.IsChecked == true ? 45 : 25;
+        _settings.Pomodoro.BreakMinutes = Break15.IsChecked == true ? 15 : Break10.IsChecked == true ? 10 : 5;
         d.ShowOnAllScreens = ShowAllScreens.IsChecked == true;
         d.ShowStartButton = ShowStart.IsChecked == true;
         d.ShowNowPlaying = ShowMedia.IsChecked == true;
@@ -293,7 +332,6 @@ public partial class SettingsWindow : Window
         w.Enabled = WpEnabled.IsChecked == true;
         w.Mode = HomeStatic.IsChecked == true ? WallpaperMode.Static : HomeAnimated.IsChecked == true ? WallpaperMode.Animated : WallpaperMode.Smart;
         w.Interactive = WpInteractive.IsChecked == true;
-        w.AudioReactive = WpMusic.IsChecked == true;
         w.OnBattery = BatStatic.IsChecked == true ? BatteryBehavior.Static : BatFull.IsChecked == true ? BatteryBehavior.Full : BatteryBehavior.Eco;
         _wallpaper.Apply();
         QueueSave();

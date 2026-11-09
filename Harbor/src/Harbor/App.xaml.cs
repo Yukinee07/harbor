@@ -24,6 +24,7 @@ public partial class App : Application
     TrayIcon? _tray;
     SettingsWindow? _settingsWindow;
     PreviewController? _previews;
+    PomodoroController? _pomodoro;
     bool _shuttingDown, _restarting;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -114,6 +115,7 @@ public partial class App : Application
         _previews = new PreviewController(_dock) { Enabled = _settings.Dock.WindowPreviews };
         Diag.Mark("previews");
         _dock.SettingsChanged += () => _previews.Enabled = _settings.Dock.WindowPreviews;
+        _pomodoro = new PomodoroController(_settings, _dock);
 
         _tray = new TrayIcon();
         _tray.LeftClick += () => OpenSettings();
@@ -217,6 +219,19 @@ public partial class App : Application
                 After(Number("--test-menu", 2, 2000) / 1000.0, () => menu.IsOpen = false);
             });
         if (args.Contains("--test-restart")) After(2, RestartAfterDrawingFailure);
+        if (args.Contains("--test-pomodoro"))
+        {
+            void Say(string what)
+            {
+                var t = _pomodoro!.Timer;
+                var r = _pomodoro.Window?.ScreenRect;
+                Log.Info($"Pomodoro test: {what}: phase={t.Phase} running={t.Running} left={t.Remaining.TotalSeconds:0} fraction={t.Fraction:0.00} rounds={t.Rounds} rect={r?.Left},{r?.Top},{r?.Right},{r?.Bottom}");
+            }
+            _pomodoro!.Timer.Finished += ended => Say($"finished {ended}");
+            After(2, () => { _pomodoro.Open(); _pomodoro.Timer.Start(); Say("started"); });
+            After(6, () => { _pomodoro.Window?.ShowFullFor(3000); Say("opened"); });
+            After(11, () => { _pomodoro.Timer.EndIn(TimeSpan.FromSeconds(1)); Say("ending"); });
+        }
         if (args.Contains("--test-screens"))
             After(3, () =>
             {
@@ -448,6 +463,18 @@ public partial class App : Application
                 }, "\uE711"));
                 menu.Items.Add(Menus.Item("Quit Harbor", () => Shutdown(), "\uE7E8"));
                 break;
+            case DockItemKind.Pomodoro:
+                menu.Items.Add(Menus.Item(_pomodoro!.Timer.Running ? "Pause" : "Start", () => _pomodoro.Timer.Toggle(), _pomodoro.Timer.Running ? "\uE769" : "\uE768"));
+                menu.Items.Add(Menus.Item("Reset", () => _pomodoro.Timer.Reset(), "\uE72C"));
+                menu.Items.Add(new Separator());
+                menu.Items.Add(Menus.Item("Remove from dock", () =>
+                {
+                    _settings.Dock.ShowPomodoro = false;
+                    _settings.Save();
+                    dock.ApplySettings();
+                    dock.NotifySettingsChanged();
+                }, "\uE711"));
+                break;
             case DockItemKind.Clock:
                 menu.Items.Add(Menus.Item("Date and time settings", () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:dateandtime") { UseShellExecute = true }), "\uE787"));
                 menu.Items.Add(new Separator());
@@ -542,6 +569,7 @@ public partial class App : Application
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
             try { _settingsWindow?.Close(); } catch { }
             _previews?.Shutdown();
+            _pomodoro?.Dispose();
             _wallpaper?.Dispose();
             _dock?.Dispose();
             _tray?.Dispose();

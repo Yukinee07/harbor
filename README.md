@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="Release/Harbor-Setup-1.2.0.exe"><b>Download the latest version</b></a>
+  <a href="Release/Harbor-Setup-1.3.0.exe"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](Harbor/docs/images/dock.png)
 
 ## Install
 
-1. Open the [Releases page](Release/Harbor-Setup-1.2.0.exe) and download `Harbor-Setup-<version>.exe`.
+1. Open the [Releases page](Release/Harbor-Setup-1.3.0.exe) and download `Harbor-Setup-<version>.exe`.
 2. Run it. That one file is everything: it needs no admin rights and carries its own copy of .NET.
 
 The installer isn't code signed, so Windows may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
@@ -35,6 +35,7 @@ Harbor installs for the current user only and can be removed from Windows Settin
 - **Clock and calendar** at the end of the dock. Hover for the time to the second and a month you can page through.
 - **Window previews**: hover a running app to see live pictures of its windows. Click one to switch to it, or use its X to close it.
 - **One icon per app**, however Windows labels its windows, and your taskbar pins are imported the first time you run it.
+- **Pomodoro timer**: a button in the dock opens a floating timer, at the top of the screen until you drag it somewhere else. At rest it's just a thin bar showing the time left; hover it for the full timer. You can turn it off in Settings.
 - **Now Playing tile** with album art. Click to play or pause, scroll to skip.
 - **Optional extras**: auto-hide when a window covers the dock, and hiding the Windows taskbar. If Harbor is ever killed, the taskbar comes back the next time it starts.
 
@@ -55,7 +56,6 @@ Eleven scenes that react to your mouse, drawn at your screen's own resolution be
 ![Ten more wallpaper scenes](Harbor/docs/images/wallpapers.jpg)
 
 - **Interactive**: light and movement follow your pointer, and clicks on the desktop send ripples.
-- **React to music** (optional): the bass, mids and treble of whatever your PC is playing drive the scene. Nothing is recorded or stored.
 - **Sakura**: cherry trees in full bloom beside a still lake, with petals falling on the breeze. Move the mouse to blow them around.
 - **Careful with power**: the wallpaper stops when it's hidden behind windows, under a full-screen game, or when the PC is locked. It slows down on battery and goes still when the battery is low. It also asks Windows for the power-saving graphics chip, so it shouldn't wake a gaming GPU on its own.
 
@@ -91,7 +91,7 @@ The version number and credit live in `src\Directory.Build.props`.
 src/Harbor
   Composition/   the compositor and drawing surfaces
   Dock/          the dock, its panels, window tracking, volume, brightness and taskbar control
-  Wallpaper/     the render thread, power rules, music analysis and scenes (Scenes/*.hlsl)
+  Wallpaper/     the render thread, power rules and scenes (Scenes/*.hlsl)
   Interop/       Windows API declarations and icon extraction
   UI/            settings window, theme, tray icon, previews and autostart
 src/HarborSetup  the installer and uninstaller
