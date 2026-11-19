@@ -30,6 +30,7 @@ internal static class TaskbarController
     static IntPtr s_hook;
     static Native.WinEventProc? s_proc;
     static bool s_hidden;
+    static long s_lastFix;
 
     public static bool IsHidden => s_hidden;
 
@@ -78,6 +79,28 @@ internal static class TaskbarController
     {
         if (!s_hidden && !File.Exists(s_marker)) return;
         RestoreCore(ReadSavedState());
+    }
+
+    /// <summary>
+    /// Hiding the taskbar's windows isn't enough by itself: Windows keeps its strip of the screen for it unless it's set to
+    /// auto-hide, so maximized windows stop short of the bottom. Windows sometimes turns auto-hide back off by itself, so this
+    /// is checked every couple of seconds. It only uses local calls, so a busy Explorer can't hold the dock up.
+    /// </summary>
+    public static void KeepHidden()
+    {
+        if (!s_hidden) return;
+        var tray = Native.FindWindow("Shell_TrayWnd", null);
+        if (tray == IntPtr.Zero || !Native.GetWindowRect(tray, out var r) || r.Width <= 0 || r.Height <= 0) return;
+        var work = Native.GetMonitorInfo(Native.MonitorFromWindow(tray, Native.MONITOR_DEFAULTTONEAREST)).rcWork;
+        // With auto-hide on, the taskbar sits inside the usable area; without it, the usable area stops where it starts.
+        bool reserved = r.Right <= work.Left || r.Left >= work.Right || r.Bottom <= work.Top || r.Top >= work.Bottom;
+        if (reserved && Environment.TickCount64 - s_lastFix > 10_000)
+        {
+            s_lastFix = Environment.TickCount64;
+            Log.Warn("Windows was keeping space for the hidden taskbar; turning its auto-hide back on");
+            SetAppBarState(tray, ABS_AUTOHIDE);
+        }
+        if (Native.IsWindowVisible(tray)) HideTrayWindows();
     }
 
     /// <summary>After an Explorer restart the taskbar windows are new; hide them again.</summary>

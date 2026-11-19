@@ -33,6 +33,9 @@ public partial class App : Application
         // from loading a whole Direct3D 9 stack, which on current Intel drivers means Direct3D 12 and video as well.
         System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
         base.OnStartup(e);
+        // Apps opened from the dock start in Harbor's working folder unless told otherwise. Left as Harbor's own folder, they
+        // would hold it open for as long as they run, which stops an update replacing it.
+        try { Environment.CurrentDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); } catch { }
 
         if (e.Args.Length == 2 && e.Args[0] == "--watch" && int.TryParse(e.Args[1], out int watched))
         {
@@ -219,6 +222,16 @@ public partial class App : Application
                 After(Number("--test-menu", 2, 2000) / 1000.0, () => menu.IsOpen = false);
             });
         if (args.Contains("--test-restart")) After(2, RestartAfterDrawingFailure);
+        // --test-where <exe> [seconds]: logs where that running app sits in the main screen's dock, so a test can click it.
+        if (args.Contains("--test-where"))
+            After(Number("--test-where", 2, 6), () =>
+            {
+                string exe = Arg("--test-where", 1) ?? "";
+                var item = _dock!.Items.FirstOrDefault(i => i.ExePath?.EndsWith(exe, StringComparison.OrdinalIgnoreCase) == true || _dock.Tracker.Windows.Any(w => i.Windows.Contains(w.Hwnd) && w.ExePath?.EndsWith(exe, StringComparison.OrdinalIgnoreCase) == true));
+                var r = item != null ? _dock.Docks[0].GetItemScreenRect(item) : null;
+                if (item == null) Log.Info("Item test: items are " + string.Join(", ", _dock.Items.Select(i => i.Kind + ":" + i.Name + ":" + (i.ExePath ?? "-") + ":" + i.Windows.Count)));
+                Log.Info($"Item test: {exe} found={item != null} active={item?.IsActive} x={(r?.Left + r?.Right) / 2} y={(r?.Top + r?.Bottom) / 2}");
+            });
         if (args.Contains("--test-pomodoro"))
         {
             void Say(string what)

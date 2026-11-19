@@ -76,17 +76,27 @@ namespace HarborSetup
             DeleteDirectory(old);
             Extract(staging, progress);
 
-            if (Directory.Exists(InstallDir)) Retry(() => Directory.Move(InstallDir, old));
-            try
+            if (!Directory.Exists(InstallDir) || TryMove(InstallDir, old))
             {
-                Retry(() => Directory.Move(staging, InstallDir));
+                try
+                {
+                    Retry(() => Directory.Move(staging, InstallDir));
+                }
+                catch
+                {
+                    if (Directory.Exists(old) && !Directory.Exists(InstallDir)) Directory.Move(old, InstallDir);
+                    throw;
+                }
+                DeleteDirectory(old);
             }
-            catch
+            else
             {
-                if (Directory.Exists(old) && !Directory.Exists(InstallDir)) Directory.Move(old, InstallDir);
-                throw;
+                // Something is using the folder itself, usually an app started from the dock that kept it as its working
+                // folder. Windows won't move a folder in use, but the files in it are free, so they're replaced where they are.
+                Log("The old copy's folder is in use; updating its files in place");
+                UpdateInPlace(staging, InstallDir);
+                DeleteDirectory(staging);
             }
-            DeleteDirectory(old);
 
             WriteShortcut(StartMenuShortcut);
             if (desktopShortcut) WriteShortcut(DesktopShortcut);
@@ -256,6 +266,36 @@ namespace HarborSetup
             if (!Directory.Exists(path)) return;
             try { Retry(() => Directory.Delete(path, true)); }
             catch (Exception ex) { Log("Could not delete " + path + ": " + ex.Message); }
+        }
+
+        static bool TryMove(string from, string to)
+        {
+            try
+            {
+                Retry(() => Directory.Move(from, to));
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Makes <paramref name="target"/> match <paramref name="source"/>: every file copied over, and files the new version no longer has removed.</summary>
+        static void UpdateInPlace(string source, string target)
+        {
+            var keep = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+            {
+                string relative = file.Substring(source.Length).TrimStart(Path.DirectorySeparatorChar);
+                string destination = Path.Combine(target, relative);
+                keep.Add(destination);
+                Directory.CreateDirectory(Path.GetDirectoryName(destination));
+                Retry(() => File.Copy(file, destination, true));
+            }
+            foreach (var file in Directory.GetFiles(target, "*", SearchOption.AllDirectories))
+                if (!keep.Contains(file))
+                    try { File.Delete(file); } catch (Exception ex) { Log("Could not remove " + file + ": " + ex.Message); }
         }
 
         /// <summary>Antivirus and search indexers hold new files for a moment, so a first failure means little.</summary>

@@ -17,6 +17,7 @@ internal sealed class DockController : IDisposable
     readonly Dispatcher _ui;
     readonly Dictionary<string, DockItem> _items = new();
     readonly DispatcherTimer _overlapTimer, _clockTimer;
+    readonly DispatcherTimer _taskbarCheck = new() { Interval = TimeSpan.FromSeconds(2) };
     readonly List<DockWindow> _docks = new();
     string? _screensSeen;
     Func<WallpaperMode>? _currentWallpaperMode;
@@ -331,7 +332,9 @@ internal sealed class DockController : IDisposable
         foreach (var w in windows.OrderByDescending(w => w.LastActiveTick).ThenBy(w => w.FirstSeenTick))
         {
             item.Windows.Add(w.Hwnd);
-            if (w.Hwnd == fg || w.Hwnd == fgRoot) item.IsActive = true;
+            // Windows often leaves a window it has just minimized as the foreground one. It isn't in front of anything, so
+            // counting it would make the next click on its icon try to minimize it again instead of bringing it back.
+            if ((w.Hwnd == fg || w.Hwnd == fgRoot) && !Native.IsIconic(w.Hwnd)) item.IsActive = true;
             if (w.Flashing) item.NeedsAttention = true;
         }
     }
@@ -437,7 +440,7 @@ internal sealed class DockController : IDisposable
         var windows = item.Windows.Where(Native.IsWindow).ToList();
         if (windows.Count == 0) { Launch(item); return; }
 
-        if (_pressedWasActive)
+        if (_pressedWasActive && !windows.Any(Native.IsIconic))
         {
             if (windows.Count == 1)
             {
@@ -637,11 +640,20 @@ internal sealed class DockController : IDisposable
             foreach (var dock in _docks) dock.Bounce(item, 2);
     }
 
+    static void OnTaskbarCheck(object? sender, EventArgs e) => TaskbarController.KeepHidden();
+
     void SetTaskbarHidden(bool hidden)
     {
         if (hidden == TaskbarController.IsHidden) return;
         if (hidden) TaskbarController.Hide();
         else TaskbarController.Restore();
+        if (hidden)
+        {
+            _taskbarCheck.Tick -= OnTaskbarCheck;
+            _taskbarCheck.Tick += OnTaskbarCheck;
+            _taskbarCheck.Start();
+        }
+        else _taskbarCheck.Stop();
         // The work area changes asynchronously; reposition once Explorer has caught up.
         foreach (var dock in _docks) dock.Reposition();
         var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };

@@ -315,11 +315,11 @@ internal static class WindowActions
 
     public static void Activate(IntPtr hwnd)
     {
+        // The window itself first: a popup it owns can still be showing while it's minimized.
+        Restore(hwnd);
         var popup = Native.GetLastActivePopup(hwnd);
         if (popup != IntPtr.Zero && Native.IsWindowVisible(popup)) hwnd = popup;
-
-        if (Native.IsIconic(hwnd))
-            Native.SendMessageTimeout(hwnd, WM_SYSCOMMAND, (IntPtr)Native.SC_RESTORE, IntPtr.Zero, Native.SMTO_ABORTIFHUNG, 200, out _);
+        Restore(hwnd);
 
         if (Native.SetForegroundWindow(hwnd) && Native.GetForegroundWindow() == hwnd) return;
 
@@ -340,6 +340,14 @@ internal static class WindowActions
             finally { Native.AttachThreadInput(me, fgThread, false); }
         }
         if (Native.GetForegroundWindow() != hwnd) Native.SwitchToThisWindow(hwnd, true);
+    }
+
+    static void Restore(IntPtr hwnd)
+    {
+        if (!Native.IsIconic(hwnd)) return;
+        Native.SendMessageTimeout(hwnd, WM_SYSCOMMAND, (IntPtr)Native.SC_RESTORE, IntPtr.Zero, Native.SMTO_ABORTIFHUNG, 200, out _);
+        // An app busy for longer than that would miss it; this one waits in its queue until it gets to it.
+        if (Native.IsIconic(hwnd)) Native.ShowWindowAsync(hwnd, Native.SW_RESTORE);
     }
 
     public static void Minimize(IntPtr hwnd)

@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="Release/Harbor-Setup-1.3.0.exe"><b>Download the latest version</b></a>
+  <a href="Release/Harbor-Setup-1.3.1.exe"><b>Download the latest version</b></a>
 </p>
 
 ![Harbor's dock and calendar over the Aurora wallpaper](Harbor/docs/images/dock.png)
 
 ## Install
 
-1. Open the [Releases page](Release/Harbor-Setup-1.3.0.exe) and download `Harbor-Setup-<version>.exe`.
+1. Open the [Releases page](Release/Harbor-Setup-1.3.1.exe) and download `Harbor-Setup-<version>.exe`.
 2. Run it. That one file is everything: it needs no admin rights and carries its own copy of .NET.
 
 The installer isn't code signed, so Windows may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
